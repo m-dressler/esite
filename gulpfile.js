@@ -1,8 +1,8 @@
 // @ts-check
-import gulp from 'gulp';
-import fs from "fs";
-import ts from "gulp-typescript";
-import minify from "gulp-minify";
+const gulp = require('gulp');
+const fs = require("fs");
+const ts = require("gulp-typescript");
+const minify = require("gulp-minify");
 
 const buildFolder = './lib';
 
@@ -42,4 +42,4 @@ addTask('minify', () => gulp.src(buildFolder + '/**/*.js').pipe(minify({
   ext: { min: '.js' }, noSource: true
 })).pipe(gulp.dest(buildFolder)));
 
-export default gulp.series(...taskNames);
+module.exports = { default: gulp.series(...taskNames) };
