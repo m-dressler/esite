@@ -6,10 +6,15 @@ import fs from "fs";
 import yaml from "yaml";
 import { CloudFront } from "@aws-sdk/client-cloudfront";
 
+const terminate = (message: string) => {
+  console.error(message);
+  process.exit(1);
+};
+
 const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = process.env;
 
 if (!(AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY))
-  throw new Error(
+  throw terminate(
     "Missing environment variables AWS_ACCESS_KEY_ID and/or AWS_SECRET_ACCESS_KEY"
   );
 
@@ -26,7 +31,7 @@ const config = (() => {
       encoding: "utf-8",
     });
   } catch (error) {
-    throw new Error("Could not read aws-website-config.yaml");
+    throw terminate("Could not read aws-website-config.yaml");
   }
 
   const unsafeConfig = yaml.parse(configString);
@@ -77,7 +82,7 @@ const config = (() => {
     .map(([key]) => key);
 
   if (alienKeys.length || missingKeys.length) {
-    throw new Error(
+    throw terminate(
       `Invalid aws-website-config.yaml${
         alienKeys.length
           ? "\nFound the following unknown keys: " + alienKeys.join(", ")
@@ -101,9 +106,9 @@ if (config.CloudfrontId === "__NONE__") {
 if (config.BucketPath.startsWith("/")) config.BucketPath.substring(1);
 if (!config.SourcePath.endsWith("/")) config.SourcePath += "/";
 if (!config.SourcePath.startsWith("./"))
-  throw new Error("SourcePath must be a relative path in the project.");
+  throw terminate("SourcePath must be a relative path in the project.");
 if (!(typeof config.RemoveHtmlExtension !== "boolean"))
-  throw new Error("RemoveHtmlExtension must be a boolean");
+  throw terminate("RemoveHtmlExtension must be a boolean");
 
 const s3Client = new S3Client({
   region: config.BucketRegion,
