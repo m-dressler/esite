@@ -107,7 +107,7 @@ if (config.BucketPath.startsWith("/")) config.BucketPath.substring(1);
 if (!config.SourcePath.endsWith("/")) config.SourcePath += "/";
 if (!config.SourcePath.startsWith("./"))
   throw terminate("SourcePath must be a relative path in the project.");
-if (!(typeof config.RemoveHtmlExtension !== "boolean"))
+if (typeof config.RemoveHtmlExtension !== "boolean")
   throw terminate("RemoveHtmlExtension must be a boolean");
 
 const s3Client = new S3Client({
