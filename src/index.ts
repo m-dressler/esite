@@ -143,7 +143,7 @@ const uploadDir = async (dir: string) => {
     });
     promises.push(promise);
   }
-  await Promise.all(promises);
+  await Promise.allSettled(promises);
 };
 
 uploadDir(config.SourcePath).then(async () => {
