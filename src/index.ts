@@ -103,8 +103,10 @@ if (config.CloudfrontId === "__NONE__") {
   );
   config.CloudfrontId = "";
 }
-if (config.BucketPath.startsWith("/")) config.BucketPath.substring(1);
-if (!config.SourcePath.endsWith("/")) config.SourcePath += "/";
+if (config.BucketPath.startsWith("/"))
+  config.BucketPath = config.BucketPath.substring(1);
+if (!config.SourcePath.endsWith("/"))
+  config.SourcePath = config.SourcePath += "/";
 if (!config.SourcePath.startsWith("./"))
   throw terminate("SourcePath must be a relative path in the project.");
 if (typeof config.RemoveHtmlExtension !== "boolean")
