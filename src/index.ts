@@ -148,7 +148,13 @@ const uploadDir = async (dir: string) => {
     });
     promises.push(promise);
   }
-  await Promise.allSettled(promises);
+  const result = await Promise.allSettled(promises);
+  for (let i = 0; i < result.length; i++) {
+    const element = result[i];
+    if (element.status === "rejected")
+      console.error("Couldn't upload element:", element.reason);
+  }
+  return result;
 };
 
 uploadDir(config.SourcePath).then(async () => {
