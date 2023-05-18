@@ -106,8 +106,8 @@ if (config.CloudfrontId === "__NONE__") {
 if (config.BucketPath.startsWith("/"))
   config.BucketPath = config.BucketPath.substring(1);
 if (config.SourcePath === "/") config.SourcePath = "";
-if (config.SourcePath !== "" || !config.SourcePath.endsWith("/"))
-  config.BucketPath = config.BucketPath + "/";
+if (config.BucketPath !== "" && !config.BucketPath.endsWith("/"))
+  config.BucketPath = config.BucketPath += "/";
 if (!config.SourcePath.endsWith("/"))
   config.SourcePath = config.SourcePath += "/";
 if (!config.SourcePath.startsWith("./"))
