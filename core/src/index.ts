@@ -11,6 +11,12 @@ const terminate = (message: string) => {
   process.exit(1);
 };
 
+class ParseError extends Error {
+  constructor(expected: string) {
+    super(expected);
+  }
+}
+
 const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = process.env;
 
 if (!(AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY))
@@ -56,9 +62,20 @@ const config = (() => {
     },
     RemoveHtmlExtension: {
       optional: true,
-      default: true,
+      default: "true",
+      parser: (value) => {
+        const str = value.toLowerCase();
+        if (str === "true") return true;
+        if (str === "false") return false;
+        throw new ParseError('must be either "true" or "false"');
+      },
     },
-  } as const;
+  } as const satisfies {
+    [key: string]: (
+      | { optional: false }
+      | { optional: true; default: string }
+    ) & { parser?: (str: string) => any };
+  };
 
   const config = Object.fromEntries(
     Object.entries(configValidator).map(([key, expected]) => [
@@ -68,11 +85,12 @@ const config = (() => {
   ) as { -readonly [key in keyof typeof configValidator]: string };
 
   const alienKeys: string[] = [];
+  const invalidKeys: [key: string, error: ParseError][] = [];
 
   for (const key in unsafeConfig) {
-    if (key in configValidator)
+    if (key in configValidator) {
       config[key as keyof typeof config] = unsafeConfig[key];
-    else alienKeys.push(key);
+    } else alienKeys.push(key);
   }
 
   const missingKeys = Object.entries(configValidator)
@@ -107,11 +125,12 @@ if (config.BucketPath.startsWith("/"))
   config.BucketPath = config.BucketPath.substring(1);
 if (config.SourcePath === "/") config.SourcePath = "";
 if (config.BucketPath !== "" && !config.BucketPath.endsWith("/"))
-  config.BucketPath = config.BucketPath += "/";
-if (!config.SourcePath.endsWith("/"))
-  config.SourcePath = config.SourcePath += "/";
+  config.BucketPath += "/";
+if (!config.SourcePath.endsWith("/")) config.SourcePath += "/";
 if (!config.SourcePath.startsWith("./"))
-  throw terminate("SourcePath must be a relative path in the project.");
+  throw terminate(
+    "SourcePath must be a relative path in the project starting with './'."
+  );
 if (typeof config.RemoveHtmlExtension !== "boolean")
   throw terminate("RemoveHtmlExtension must be a boolean");
 

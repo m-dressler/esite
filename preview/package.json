@@ -1,0 +1,16 @@
+{
+  "name": "@awsw/preview",
+  "version": "1.0.0",
+  "description": "",
+  "bin": "./lib/index.js",
+  "keywords": [
+    "aws",
+    "s3",
+    "cloudfront"
+  ],
+  "files": [
+    "lib/**/*"
+  ],
+  "author": "mDressler",
+  "license": "MIT"
+}
