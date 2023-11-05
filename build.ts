@@ -129,8 +129,11 @@ await minifyJs();
 if (args.includes("--publish")) {
   console.log("Publishing");
   const otp = getTotp();
-  const { stdout, stderr } = await exec("pnpm publish --otp " + otp, {
-    cwd: projectPath,
-  });
+  const { stdout, stderr } = await exec(
+    "pnpm publish --access public --otp " + otp,
+    {
+      cwd: projectPath,
+    }
+  );
   console.log(stdout, stderr);
 }
