@@ -3,6 +3,8 @@ import fs, { readdirSync } from "fs";
 import inquirer from "inquirer";
 import { minify } from "terser";
 import { promisify } from "util";
+import "dotenv/config";
+import crypto from "crypto";
 
 const exec = promisify(child_process.exec);
 
@@ -106,11 +108,29 @@ const minifyJs = async () => {
   await Promise.all(files.map(minifyScript));
 };
 
+const getTotp = () => {
+  const secret = process.env.OTP_KEY_HEX;
+  if (!secret) throw new Error("Missing env-var 'OTP_KEY_HEX'");
+  const counterBuffer = Buffer.alloc(8);
+  counterBuffer.writeBigInt64BE(BigInt(Math.floor(Date.now() / 30_000)), 0);
+  const hmac = crypto
+    .createHmac("sha1", Buffer.from(secret, "hex"))
+    .update(counterBuffer)
+    .digest();
+  const offset = hmac[hmac.length - 1] & 0x0f;
+  const otpPart = hmac.readUInt32BE(offset) & 0x7fffffff;
+  const otp = otpPart % Math.pow(10, 6);
+  return otp.toString().padStart(6, "0");
+};
+
 await clearDirectory(buildFolderName);
 await tsCompile();
 await minifyJs();
 if (args.includes("--publish")) {
-  console.log("Publishing")
-  const { stdout, stderr } = await exec("pnpm publish", { cwd: projectPath });
+  console.log("Publishing");
+  const otp = getTotp();
+  const { stdout, stderr } = await exec("pnpm publish --otp " + otp, {
+    cwd: projectPath,
+  });
   console.log(stdout, stderr);
 }
