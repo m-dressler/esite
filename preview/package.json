@@ -1,8 +1,11 @@
 {
   "name": "@awsw/preview",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
-  "bin": "./lib/index.js",
+  "bin": {
+    "awsw-preview": "./lib/index.js",
+    "awswpreview": "./lib/index.js"
+  },
   "keywords": [
     "aws",
     "s3",
