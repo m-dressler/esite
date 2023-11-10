@@ -30,7 +30,17 @@ const projectPath = `./${project}/`;
 const buildFolderName = projectPath + "lib";
 
 if (args.includes("--version")) {
-  const version = args[args.indexOf("--version") + 1];
+  let version = args[args.indexOf("--version") + 1];
+  const versions = ["patch", "minor", "major"];
+  if (!versions.includes(version))
+    version = await inquirer
+      .prompt({
+        type: "list",
+        name: "version",
+        message: "Select a version:",
+        choices: versions,
+      })
+      .then((res) => res.version);
   const { stdout } = await exec("pnpm version " + version, {
     cwd: projectPath,
   });
