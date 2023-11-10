@@ -94,7 +94,7 @@ const requestListener = async (req: IncomingMessage, res: ServerResponse) => {
   } else response = { status: 400, body: { message: "Missing request URL" } };
 
   const { body, status } = response;
-  res.writeHead(status);
+  res.writeHead(status, headers);
 
   if (body instanceof ReadStream) body.pipe(res);
   else res.end(typeof body === "object" ? JSON.stringify(body) : body);
