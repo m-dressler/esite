@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import http, { IncomingMessage, ServerResponse } from "http";
 import fs, { ReadStream } from "fs";
+import mime from "mime";
 
 /** //TODO */
 const root = "./src/";
@@ -50,16 +51,10 @@ const processRequest = async (
   if (path === "//awsw-preview/listen")
     return fsChangePromise.then((event) => ({ status: 200, body: { event } }));
 
-  // Open index.html as root file
-  if (path === "/") path = "index.html";
-  const hasFileExtension = path.includes(".");
-  // If there is no file extension assume html
-  if (!hasFileExtension) path += ".html";
-
   // TODO append JS logic to refresh page on changes
   if (await fileExists(root + path)) {
     const stream = fs.createReadStream(root + path);
-    if (path.includes(".html") || !hasFileExtension)
+    if (path.includes(".html"))
       stream.push('<script src="//awsw-preview.js" type="module"></script>');
     return { status: 200, body: stream };
   }
@@ -84,8 +79,17 @@ const processRequest = async (
 const requestListener = async (req: IncomingMessage, res: ServerResponse) => {
   const reqUrl = req.url;
   let response: { status: number; body: string | ReadStream | any };
+  const headers: HeadersInit = {};
   if (reqUrl) {
-    const path = new URL(reqUrl, `http://localhost`).pathname;
+    let path = new URL(reqUrl, `http://localhost`).pathname;
+    // Open index.html as root file
+    if (path === "/") path = "index.html";
+    const hasFileExtension = path.includes(".");
+    // If there is no file extension assume html
+    if (!hasFileExtension) path += ".html";
+
+    const mimeType = mime.getType(path);
+    if (mimeType) headers["Content-Type"] = mimeType;
     response = await processRequest(path);
   } else response = { status: 400, body: { message: "Missing request URL" } };
 
