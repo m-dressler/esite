@@ -26,8 +26,8 @@ export const run = (Config: ConfigType<typeof CustomConfig>) => {
     dirname(fileURLToPath(import.meta.url)) + "/awsw-preview.cjs";
 
   const createResolvablePromise = () => {
-    let resolve: (event: "css" | "refresh") => void = () => {};
-    const promise = new Promise<"css" | "refresh">((res) => (resolve = res));
+    let resolve: (event: "css" | "reload") => void = () => {};
+    const promise = new Promise<"css" | "reload">((res) => (resolve = res));
     return Object.assign(promise, { resolve });
   };
 
@@ -48,7 +48,7 @@ export const run = (Config: ConfigType<typeof CustomConfig>) => {
   // Listen to changes in the filesystem to resolve pending promises
   fs.watch(root, { recursive: true }).addListener("change", (_, filename) => {
     const file = typeof filename === "string" ? filename : filename.toString();
-    const event = file.endsWith("css") ? "css" : "refresh";
+    const event = file.endsWith("css") ? "css" : "reload";
     // Re-check if error doc exists now
     fileExists(root + errorDocument).then(
       (exists) => (errorDocumentExists = exists)
