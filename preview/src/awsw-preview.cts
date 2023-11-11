@@ -1,6 +1,5 @@
-// @ts-check
 // <![CDATA[  <-- For SVG support
-if (!window.fetch) {
+if ("fetch" in window) {
   (async () => {
     const refreshCSS = () => {
       const { head } = document;
