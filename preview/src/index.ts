@@ -126,8 +126,8 @@ process.env.AWSW_LOAD_MODULES =
   (process.env.AWSW_LOAD_MODULES || "") + "preview,";
 process.env.AWSW_EXEC_MODULE = "preview";
 
-// @ts-expect-error // TODO update to @awsw/core
-import("../../core/src/index.ts").catch((err) => {
+// @ts-expect-error
+import("@awsw/core").catch((err) => {
   if (
     err instanceof Error &&
     err.message.includes("Cannot find module '") &&
