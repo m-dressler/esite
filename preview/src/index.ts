@@ -4,8 +4,8 @@ import fs, { ReadStream } from "fs";
 import mime from "mime";
 
 /** //TODO */
-const root = "./src/";
-const errorDocument = root + "error.html";
+const root = "./src";
+const errorDocument = root + "/error.html";
 const port = 3000;
 const previewJsPath =
   import.meta.url.substring(0, import.meta.url.lastIndexOf("/")) +
@@ -54,7 +54,7 @@ const processRequest = async (
   // TODO append JS logic to refresh page on changes
   if (await fileExists(root + path)) {
     const stream = fs.createReadStream(root + path);
-    if (path.includes(".html"))
+    if (path.includes(".html") || path.includes(".svg"))
       stream.push('<script src="/-/awsw-preview.js" type="module"></script>');
     return { status: 200, body: stream };
   }
