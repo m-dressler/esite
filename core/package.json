@@ -1,6 +1,6 @@
 {
   "name": "@awsw/core",
-  "version": "0.1.3",
+  "version": "0.0.1",
   "description": "",
   "main": "lib/index.js",
   "bin": {
