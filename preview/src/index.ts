@@ -3,6 +3,8 @@ import http, { IncomingMessage, ServerResponse } from "http";
 import fs, { ReadStream } from "fs";
 import mime from "mime";
 import type { ConfigType, Configuration } from "../../core/src";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 
 export const CustomConfig = {
   ErrorDocument: {
@@ -21,8 +23,7 @@ export const run = (Config: ConfigType<typeof CustomConfig>) => {
   const errorDocument = Config.ErrorDocument;
   const port = Config.PreviewPort;
   const previewJsPath =
-    import.meta.url.substring(0, import.meta.url.lastIndexOf("/")) +
-    "/awsw-preview.cjs";
+    dirname(fileURLToPath(import.meta.url)) + "/awsw-preview.cjs";
 
   const createResolvablePromise = () => {
     let resolve: (event: "css" | "refresh") => void = () => {};
