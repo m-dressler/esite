@@ -27,7 +27,7 @@ if (!project) {
 }
 
 const projectPath = `./${project}/`;
-const buildFolderName = projectPath + "lib";
+const buildFolderName = projectPath + "lib/";
 
 if (args.includes("--version")) {
   let version = args[args.indexOf("--version") + 1];
@@ -65,7 +65,7 @@ const listFiles = (path: string, type?: string | string[]) => {
       typeof type === "string" ? ["." + type] : type.map((t) => "." + t);
     files = files.filter((f) => options.some((o) => f.endsWith(o)));
   }
-  return files.map((f) => projectPath + f);
+  return files.map((f) => path + f);
 };
 
 /**
@@ -114,7 +114,7 @@ const minifyScript = async (file: string) => {
 };
 
 const minifyJs = async () => {
-  const files = listFiles(projectPath, ["js", "cjs"]);
+  const files = listFiles(buildFolderName, ["js", "cjs"]);
   await Promise.all(files.map(minifyScript));
 };
 
