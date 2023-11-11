@@ -62,7 +62,7 @@ export const run = (Config: ConfigType<typeof CustomConfig>) => {
   ): Promise<{ status: number; body: string | ReadStream | any }> => {
     if (path === "/-/awsw-preview.js")
       return { status: 200, body: fs.createReadStream(previewJsPath) };
-    if (path === "/-/awsw-preview/listen")
+    if (path === "/-/awsw-preview/listen.js")
       return fsChangePromise.then((event) => ({
         status: 200,
         body: { event },
