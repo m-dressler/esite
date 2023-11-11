@@ -162,9 +162,10 @@ await minifyJs();
 if (args.includes("--publish")) {
   console.log("Publishing to npmjs.org");
   const otp = getTotp();
-  const { stdout, stderr } = await exec(
-    "pnpm publish --access public --otp " + otp,
-    { cwd: projectPath }
-  );
+
+  let command = "pnpm publish --access public --otp " + otp;
+  if (args.includes("--no-git")) command += " --git-check false";
+
+  const { stdout, stderr } = await exec(command, { cwd: projectPath });
   console.log(stdout, stderr);
 }
