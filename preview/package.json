@@ -1,8 +1,9 @@
 {
   "name": "@awsw/preview",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "",
   "type": "module",
+  "main": "lib/index.js",
   "bin": {
     "awsw-preview": "./lib/index.js",
     "awswpreview": "./lib/index.js"
