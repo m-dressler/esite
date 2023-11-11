@@ -89,6 +89,26 @@ const tsCompile = async () => {
   fs.copyFileSync("./tsconfig.json", projectPath + "tsconfig.json");
   try {
     await exec("tsc", { cwd: projectPath });
+
+    // Check index.js exists
+    await fs.promises
+      .access(buildFolderName + "/index.js", fs.constants.F_OK)
+      .catch(async () => {
+        // If it doesn't exist, try to extract folder
+        const moduleFolder = `${buildFolderName}${project}/src/`;
+        const tempFolder = `${projectPath}temp/`;
+        const folderExists = await fs.promises
+          .access(moduleFolder, fs.constants.F_OK)
+          .then(
+            () => true,
+            () => false
+          );
+        fs.rmSync(tempFolder, { recursive: true, force: true });
+        fs.renameSync(moduleFolder, tempFolder);
+        fs.rmSync(buildFolderName, { recursive: true });
+        fs.renameSync(tempFolder, buildFolderName);
+        if (!folderExists) throw { stdout: "Unexpected build error (TS1)" };
+      });
     fs.rmSync(projectPath + "tsconfig.json");
   } catch (error) {
     fs.rmSync(projectPath + "tsconfig.json");
@@ -135,16 +155,16 @@ const getTotp = () => {
 };
 
 await clearDirectory(buildFolderName);
+console.log("Compiling Typescript");
 await tsCompile();
+console.log("Minifying scripts");
 await minifyJs();
 if (args.includes("--publish")) {
-  console.log("Publishing");
+  console.log("Publishing to npmjs.org");
   const otp = getTotp();
   const { stdout, stderr } = await exec(
     "pnpm publish --access public --otp " + otp,
-    {
-      cwd: projectPath,
-    }
+    { cwd: projectPath }
   );
   console.log(stdout, stderr);
 }
