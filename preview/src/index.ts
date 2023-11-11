@@ -46,16 +46,16 @@ fs.watch(root, { recursive: true }).addListener("change", (_, filename) => {
 const processRequest = async (
   path: string
 ): Promise<{ status: number; body: string | ReadStream | any }> => {
-  if (path === "//awsw-preview.js")
+  if (path === "/-/awsw-preview.js")
     return { status: 200, body: fs.createReadStream(previewJsPath) };
-  if (path === "//awsw-preview/listen")
+  if (path === "/-/awsw-preview/listen")
     return fsChangePromise.then((event) => ({ status: 200, body: { event } }));
 
   // TODO append JS logic to refresh page on changes
   if (await fileExists(root + path)) {
     const stream = fs.createReadStream(root + path);
     if (path.includes(".html"))
-      stream.push('<script src="//awsw-preview.js" type="module"></script>');
+      stream.push('<script src="/-/awsw-preview.js" type="module"></script>');
     return { status: 200, body: stream };
   }
   // Resource not in filesystem so it's a 404 error
