@@ -108,6 +108,7 @@ const minifyScript = async (file: string) => {
     mangle: {
       toplevel: true,
     },
+    module: true,
   });
   if (!code) throw new Error("Couldn't minify " + file);
   await fs.promises.writeFile(file, code);
