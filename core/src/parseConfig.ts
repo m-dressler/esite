@@ -13,8 +13,14 @@ type ConfigurationValidator<
   type?: T;
   parser?: (str: Type) => any;
 } & ({ optional: false } | { optional: true; default: Type });
+export type Configuration = {
+  [key: string]:
+    | ConfigurationValidator<"boolean">
+    | ConfigurationValidator<"number">
+    | ConfigurationValidator<"string">;
+};
 type ConfigurationValidators = keyof typeof configValidator;
-type Configuration = {
+type BaseConfiguration = {
   [key in ConfigurationValidators]: "parser" extends keyof (typeof configValidator)[key]
     ? // @ts-expect-error
       ReturnType<(typeof configValidator)[key]["parser"]>
@@ -80,12 +86,28 @@ const configValidator = {
     type: "boolean",
     default: true,
   },
-} as const satisfies {
-  [key: string]:
-    | ConfigurationValidator<"boolean">
-    | ConfigurationValidator<"number">
-    | ConfigurationValidator<"string">;
-};
+} as const satisfies Configuration;
+
+if (process.env.AWSW_LOAD_MODULES) {
+  const moduleNames = process.env.AWSW_LOAD_MODULES.split(",");
+  // Remove trailing comma module
+  moduleNames.splice(moduleNames.length - 1, 1);
+  for (let i = 0; i < moduleNames.length; ++i) {
+    const moduleName = moduleNames[i];
+    const module = await import("@awsw/" + moduleName).catch(() => {
+      console.error(
+        `Invalid env AWSW_LOAD_MODULES module @awsw/${moduleName} not installed`
+      );
+    });
+    if ("CustomConfig" in module) {
+      Object.assign(configValidator, module.CustomConfig);
+    } else {
+      console.error(
+        `Invalid env AWSW_LOAD_MODULES module @awsw/${moduleName} has no export "CustomConfig"`
+      );
+    }
+  }
+}
 
 const logError = (...args: [any, ...any[]]) =>
   console.error("\x1b[31m" + args[0].toString(), ...args.slice(1), "\x1b[31m");
@@ -118,7 +140,7 @@ const loadConfigFile = (): unknown => {
   }
 };
 
-const validateConfig = (unsafeConfigIn: unknown): Configuration => {
+const validateConfig = (unsafeConfigIn: unknown): BaseConfiguration => {
   if (!(unsafeConfigIn && typeof unsafeConfigIn === "object"))
     terminate(`${configFile} must be a valid key-value object`);
   const unsafeConfig = unsafeConfigIn as { [key: string]: any };
@@ -134,7 +156,7 @@ const validateConfig = (unsafeConfigIn: unknown): Configuration => {
     value: any;
   }[] = [];
 
-  const config: Partial<Configuration> = {};
+  const config: Partial<BaseConfiguration> = {};
   for (let i = 0; i < configKeys.length; ++i) {
     const key = configKeys[i];
     const validator = configValidator[key];
@@ -170,7 +192,7 @@ const validateConfig = (unsafeConfigIn: unknown): Configuration => {
       alienKeys,
       "\x1b[0m"
     );
-  return config as Configuration;
+  return config as BaseConfiguration;
 };
 
 const AwsCredentials = getAwsCredentials();
