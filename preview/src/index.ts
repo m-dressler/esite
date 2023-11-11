@@ -130,7 +130,8 @@ process.env.AWSW_EXEC_MODULE = "preview";
 import("../../core/src/index.ts").catch((err) => {
   if (
     err instanceof Error &&
-    err.message.includes("Cannot find module '@awsw/core'")
+    err.message.includes("Cannot find module '") &&
+    err.message.includes("@awsw/core")
   ) {
     console.error("@awsw/core not installed - please install it first.");
     process.exit(1);
