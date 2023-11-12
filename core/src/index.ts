@@ -32,9 +32,7 @@ else {
   });
 
   const uploadFile = async (file: string) => {
-    const contentType = mime.getType(file);
-    if (!contentType)
-      throw new Error("Could not get content type for file: " + file);
+    const contentType = mime.getType(file) || "application/octet-stream";
     const stream = fs.createReadStream(file);
     let key = file.replace(Config.SourcePath, Config.BucketPath);
     if (Config.RemoveHtmlExtension) key = key.replace(/\.html$/, "");
