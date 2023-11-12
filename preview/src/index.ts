@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import http, { IncomingMessage, ServerResponse } from "http";
-import fs, { ReadStream } from "fs";
+import fs from "fs";
 import mime from "mime";
 import type { ConfigType, Configuration } from "../../core/src";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { Readable, Stream, Transform } from "stream";
 
 export const CustomConfig = {
   ErrorDocument: {
@@ -23,7 +24,7 @@ export const run = (Config: ConfigType<typeof CustomConfig>) => {
   const errorDocument = Config.ErrorDocument;
   const port = Config.PreviewPort;
   const previewJsPath =
-    dirname(fileURLToPath(import.meta.url)) + "/awsw-preview.cjs";
+    dirname(fileURLToPath(import.meta.url)) + "/awsw-preview.js";
 
   const createResolvablePromise = () => {
     let resolve: (event: "css" | "reload") => void = () => {};
@@ -36,6 +37,24 @@ export const run = (Config: ConfigType<typeof CustomConfig>) => {
       () => true,
       () => false
     );
+
+  const ConcatStream = (streams?: Stream[]) => {
+    const m_streams = streams || [];
+
+    const concat = (...streams: Stream[]) =>
+      m_streams.splice(m_streams.length, 0, ...streams);
+    const pipeStream = (target: NodeJS.WritableStream, index: number) => {
+      const stream = m_streams[index];
+      const hasNext = index < m_streams.length - 1;
+      stream.pipe(target, { end: !hasNext });
+      if (hasNext) stream.on("end", pipeStream.bind(0, target, index + 1));
+    };
+    const pipe = (target: NodeJS.WritableStream) => {
+      if (m_streams.length) pipeStream(target, 0);
+      else throw new Error("No streams in concat stream");
+    };
+    return { concat, pipe };
+  };
 
   /** A promise that gets resolved once there were changes in the filesystem */
   let fsChangePromise = createResolvablePromise();
@@ -58,63 +77,73 @@ export const run = (Config: ConfigType<typeof CustomConfig>) => {
   });
 
   const processRequest = async (
+    res: http.ServerResponse,
     path: string
-  ): Promise<{ status: number; body: string | ReadStream | any }> => {
-    if (path === "/-/awsw-preview.js")
-      return { status: 200, body: fs.createReadStream(previewJsPath) };
-    if (path === "/-/awsw-preview/listen.js")
-      return fsChangePromise.then((event) => ({
-        status: 200,
-        body: { event },
-      }));
+  ): Promise<void> => {
+    if (path === "/-/awsw-preview/listen.js") {
+      fsChangePromise.then((event) =>
+        res.writeHead(200).end(JSON.stringify({ event }))
+      );
+    } else if (await fileExists(root + path)) {
+      res.writeHead(200);
 
-    // TODO append JS logic to refresh page on changes
-    if (await fileExists(root + path)) {
       const stream = fs.createReadStream(root + path);
-      if (path.includes(".html") || path.includes(".svg"))
-        stream.push('<script src="/-/awsw-preview.js" type="module"></script>');
-      return { status: 200, body: stream };
+      const isSvg = path.endsWith(".svg");
+      if (!(path.endsWith(".html") || isSvg)) return void stream.pipe(res);
+
+      const concatStream = ConcatStream();
+
+      if (!isSvg) concatStream.concat(stream);
+      else {
+        const svgTransform = new Transform({
+          transform(chunk, _, callback) {
+            callback(null, chunk.toString().replace("</svg>", ""));
+          },
+        });
+        concatStream.concat(stream.pipe(svgTransform));
+      }
+
+      const openingTag =
+        '<script type="text/javascript">' + (isSvg ? "<![CDATA[" : "");
+      concatStream.concat(Readable.from([openingTag]));
+      concatStream.concat(fs.createReadStream(previewJsPath));
+      let closingTag = "</script>";
+      if (isSvg) closingTag = " ]]>" + closingTag + "</svg>";
+      concatStream.concat(Readable.from([closingTag]));
+      concatStream.pipe(res);
     }
     // Resource not in filesystem so it's a 404 error
     else if (errorDocumentExists) {
+      res.writeHead(404);
       // Try reading the error document as error response
-      const stream = fs.createReadStream(root + errorDocument);
-      return { status: 404, body: stream };
+      fs.createReadStream(root + errorDocument).pipe(res);
     }
     // Error document doesn't exist so show default message
     else {
-      return {
-        status: 404,
-        body: {
-          message:
-            "404 - Not Found - configure/correct an error document to change the 404 response",
-        },
-      };
+      res.setHeader("Content-Type", "application/json");
+      const message =
+        "404 - Not Found - configure/correct an error document to change the 404 response";
+      res.writeHead(404).end(JSON.stringify({ message }));
     }
   };
 
   const requestListener = async (req: IncomingMessage, res: ServerResponse) => {
     const reqUrl = req.url;
-    let response: { status: number; body: string | ReadStream | any };
-    const headers: HeadersInit = {};
-    if (reqUrl) {
-      let path = new URL(reqUrl, `http://localhost`).pathname;
-      // Open index.html as root file
-      if (path === "/") path = "index.html";
-      const hasFileExtension = path.includes(".");
-      // If there is no file extension assume html
-      if (!hasFileExtension) path += ".html";
+    if (!reqUrl)
+      return void res
+        .writeHead(400)
+        .end(JSON.stringify({ message: "Missing request URL" }));
 
-      const mimeType = mime.getType(path);
-      if (mimeType) headers["Content-Type"] = mimeType;
-      response = await processRequest(path);
-    } else response = { status: 400, body: { message: "Missing request URL" } };
+    let path = new URL(reqUrl, `http://localhost`).pathname;
+    // Open index.html as root file
+    if (path === "/") path = "index.html";
+    const hasFileExtension = path.includes(".");
+    // If there is no file extension assume html
+    if (!hasFileExtension) path += ".html";
 
-    const { body, status } = response;
-    res.writeHead(status, headers);
-
-    if (body instanceof ReadStream) body.pipe(res);
-    else res.end(typeof body === "object" ? JSON.stringify(body) : body);
+    const mimeType = mime.getType(path) || "application/octet-stream";
+    res.setHeader("Content-Type", mimeType);
+    await processRequest(res, path);
   };
   const server = http.createServer(requestListener);
   const listener = server.listen(port);
