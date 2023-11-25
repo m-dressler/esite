@@ -47,7 +47,10 @@ else {
   };
 
   const uploadDir = async (dir: string) => {
-    const files = fs.readdirSync(dir);
+    const files = fs
+      .readdirSync(dir)
+      // Ignore non-content files
+      .filter((path) => path.endsWith("/.DS_Store"));
     const promises: Promise<any>[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
