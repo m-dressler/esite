@@ -1,4 +1,3 @@
-// <![CDATA[  <-- For SVG support
 if ("fetch" in window) {
   (async () => {
     const refreshCSS = () => {
@@ -37,4 +36,3 @@ if ("fetch" in window) {
     "Upgrade your browser. This Browser is NOT supporting fetch for Live-Reloading."
   );
 }
-// ]]>
