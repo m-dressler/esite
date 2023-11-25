@@ -19,7 +19,11 @@ export const CustomConfig = {
   },
 } as const satisfies Configuration;
 
-export const run: RunFunction<typeof CustomConfig> = ({ Config, buildDev }) => {
+export const run: RunFunction<typeof CustomConfig> = async ({
+  Config,
+  buildDev,
+}) => {
+  await buildDev();
   const root = Config.SourcePath;
   const errorDocument = Config.ErrorDocument;
   const port = Config.PreviewPort;

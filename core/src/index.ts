@@ -4,10 +4,15 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import mime from "mime";
 import fs from "fs";
 import { CloudFront } from "@aws-sdk/client-cloudfront";
-import { Config, buildDev, buildProd, BuildFunction, RunFunction } from "./parseConfig.js";
+import {
+  Config,
+  buildDev,
+  buildProd,
+  BuildFunction,
+  RunFunction,
+} from "./parseConfig.js";
 import type { Configuration } from "./parseConfig.js";
 export { Config, Configuration, BuildFunction, RunFunction };
-
 
 // If a awsw module set this env var we execute it, not the standard logic
 if (process.env.AWSW_EXEC_MODULE) {
@@ -27,7 +32,7 @@ if (process.env.AWSW_EXEC_MODULE) {
 // If there's no exec module run the standard logic
 else {
   try {
-    await Promise.all([buildDev(), buildProd()]);
+    await buildProd();
   } catch (err) {
     if (err instanceof Error) console.error(err.message);
     else console.error(err);
@@ -41,7 +46,7 @@ else {
   const uploadFile = async (file: string) => {
     const contentType = mime.getType(file) || "application/octet-stream";
     const stream = fs.createReadStream(file);
-    let key = file.replace(Config.SourcePath, Config.BucketPath);
+    let key = file.replace(Config.BuildPath, Config.BucketPath);
     if (Config.RemoveHtmlExtension) key = key.replace(/\.html$/, "");
     return s3Client.send(
       new PutObjectCommand({
@@ -93,7 +98,7 @@ else {
     });
   };
 
-  uploadDir(Config.SourcePath)
+  uploadDir(Config.BuildPath)
     .then(async () => (Config.CloudfrontId ? invalidateCache() : 0))
     .then(() => console.log("Uploaded"));
 }

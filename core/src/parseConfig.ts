@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "fs/promises";
 import yaml from "yaml";
 
 type Types = "string" | "boolean" | "number" | "string[]";
@@ -48,6 +48,17 @@ class ParseError extends Error {
 
 const configFile = "aws-website-config.yaml";
 
+const validateLocalPath = (str: string) => {
+  // Guarantees ends with a slash
+  if (!str.endsWith("/")) str += "/";
+  // Guarantees is relative
+  if (!str.startsWith("./"))
+    throw new ParseError(
+      'Source path should be relative in the project (start with "./")'
+    );
+  return str;
+};
+
 const configValidator = {
   BucketName: {
     optional: false,
@@ -81,16 +92,12 @@ const configValidator = {
   SourcePath: {
     optional: true,
     default: "./src",
-    parser: (str) => {
-      // Guarantees ends with a slash
-      if (!str.endsWith("/")) str += "/";
-      // Guarantees is relative
-      if (!str.startsWith("./"))
-        throw new ParseError(
-          'Source path should be relative in the project (start with "./")'
-        );
-      return str;
-    },
+    parser: validateLocalPath,
+  },
+  BuildPath: {
+    optional: true,
+    default: "./build",
+    parser: validateLocalPath,
   },
   RemoveHtmlExtension: {
     optional: true,
@@ -100,7 +107,7 @@ const configValidator = {
   Modules: {
     optional: true,
     type: "string[]",
-    default: [],
+    default: [] as string[],
   },
 } as const satisfies Configuration;
 
@@ -153,7 +160,7 @@ const loadOtherModules = async (modules: string[]) => {
 
 const loadConfigFile = async (): Promise<{ [key: string]: string }> => {
   try {
-    const configString = fs.readFileSync(configFile, {
+    const configString = await fs.readFile(configFile, {
       encoding: "utf-8",
     });
     const config = yaml.parse(configString);
@@ -263,5 +270,17 @@ const buildAll = async (builds: BuildFunction[], buildName: string) => {
   }
   if (failed.length) throw new Error(buildName + " build failed");
 };
-export const buildDev = buildAll.bind(null, devBuilds, "Dev");
-export const buildProd = buildAll.bind(null, prodBuilds, "Prod");
+export const buildDev = async () => {
+  await fs.mkdir(Config.BuildPath, { recursive: true });
+  // Clear build directory
+  const files = await fs.readdir(Config.BuildPath);
+  await Promise.all(files.map((file) => fs.rm(Config.BuildPath + "/" + file)));
+  // Copy all files to build
+  fs.cp(Config.SourcePath, Config.BuildPath, { recursive: true });
+  // Start build process
+  await buildAll(devBuilds, "Dev");
+};
+export const buildProd = async () => {
+  await buildDev();
+  await buildAll(prodBuilds, "Prod");
+};
