@@ -22,16 +22,24 @@ export type Configuration = {
     | ConfigurationValidator<"string">
     | ConfigurationValidator<"string[]">;
 };
-type ConfigurationValidators = keyof typeof configValidator;
-type BaseConfiguration = {
-  [key in ConfigurationValidators]: "parser" extends keyof (typeof configValidator)[key]
+type ConfigValue<T extends Configuration> = {
+  [key in keyof T]: "parser" extends keyof T[key]
     ? // @ts-expect-error
-      ReturnType<(typeof configValidator)[key]["parser"]>
-    : "type" extends keyof (typeof configValidator)[key]
+      ReturnType<T[key]["parser"]>
+    : "type" extends keyof T[key]
     ? // @ts-expect-error
-      TypeMapper[(typeof configValidator)[key]["type"]]
+      TypeMapper[T[key]["type"]]
     : string;
 };
+export type BuildFunction<T extends Configuration = {}> = (
+  config: typeof Config & ConfigValue<T>
+) => any;
+export type RunFunction<T extends Configuration = {}> = (params: {
+  Config: typeof Config & ConfigValue<T>;
+  buildDev: typeof buildDev;
+  buildProd: typeof buildProd;
+}) => any;
+
 class ParseError extends Error {
   constructor(expected: string) {
     super(expected);
@@ -92,7 +100,7 @@ const configValidator = {
   Modules: {
     optional: true,
     type: "string[]",
-    default: [] as string[],
+    default: [],
   },
 } as const satisfies Configuration;
 
@@ -116,6 +124,9 @@ const getAwsCredentials = () => {
   } as const;
 };
 
+const devBuilds: BuildFunction[] = [];
+const prodBuilds: BuildFunction[] = [];
+
 const loadOtherModules = async (modules: string[]) => {
   let hadErrors = false;
   for (let i = 0; i < modules.length; ++i) {
@@ -125,6 +136,8 @@ const loadOtherModules = async (modules: string[]) => {
       hadErrors = true;
     });
     if (!module) continue;
+    if ("buildDev" in module) devBuilds.push(module.buildDev);
+    if ("buildProd" in module) prodBuilds.push(module.buildProd);
     if ("CustomConfig" in module)
       Object.assign(configValidator, module.CustomConfig);
     else {
@@ -170,7 +183,8 @@ const isOfType = <T extends Types>(value: unknown, type: T): value is any => {
 
 const validateConfig = (unsafeConfig: {
   [key: string]: any;
-}): BaseConfiguration => {
+}): ConfigValue<typeof configValidator> => {
+  type ConfigurationValidators = keyof typeof configValidator;
   const configKeys = Object.keys(configValidator) as ConfigurationValidators[];
   const alienKeys = Object.keys(unsafeConfig).filter(
     (key) => !configKeys.includes(key as any)
@@ -182,7 +196,8 @@ const validateConfig = (unsafeConfig: {
     value: any;
   }[] = [];
 
-  const config: Partial<BaseConfiguration> = {};
+  type Writeable<T> = { -readonly [P in keyof T]: T[P] };
+  const config: Partial<Writeable<ConfigValue<typeof configValidator>>> = {};
   for (let i = 0; i < configKeys.length; ++i) {
     const key = configKeys[i];
     const validator = configValidator[key];
@@ -217,7 +232,7 @@ const validateConfig = (unsafeConfig: {
       alienKeys,
       "\x1b[0m"
     );
-  return config as BaseConfiguration;
+  return config as ConfigValue<typeof configValidator>;
 };
 
 const AwsCredentials = getAwsCredentials();
@@ -225,3 +240,28 @@ const unsafeConfig = await loadConfigFile();
 const configFileContent = validateConfig(unsafeConfig);
 
 export const Config = { AwsCredentials, ...configFileContent } as const;
+
+const buildAll = async (builds: BuildFunction[], buildName: string) => {
+  let promises = [];
+  for (let i = 0; i < builds.length; ++i) {
+    try {
+      const promise = builds[i](Config as ConfigValue<{}> & typeof Config);
+      promises.push(promise);
+    } catch (error) {
+      promises.push(Promise.reject(error));
+    }
+  }
+
+  const result = await Promise.allSettled(promises);
+  const failed = result.filter(
+    (res) => res.status === "rejected"
+  ) as PromiseRejectedResult[];
+  for (let i = 0; i < failed.length; ++i) {
+    const error = failed[i].reason;
+    if (error instanceof Error) logError(error.message);
+    else logError(error);
+  }
+  if (failed.length) throw new Error(buildName + " build failed");
+};
+export const buildDev = buildAll.bind(null, devBuilds, "Dev");
+export const buildProd = buildAll.bind(null, prodBuilds, "Prod");

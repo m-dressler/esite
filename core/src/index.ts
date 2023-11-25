@@ -4,10 +4,10 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import mime from "mime";
 import fs from "fs";
 import { CloudFront } from "@aws-sdk/client-cloudfront";
-import { Config } from "./parseConfig.js";
+import { Config, buildDev, buildProd, BuildFunction, RunFunction } from "./parseConfig.js";
 import type { Configuration } from "./parseConfig.js";
-export { Config, Configuration };
-export type ConfigType<T extends Configuration = {}> = typeof Config & T;
+export { Config, Configuration, BuildFunction, RunFunction };
+
 
 // If a awsw module set this env var we execute it, not the standard logic
 if (process.env.AWSW_EXEC_MODULE) {
@@ -17,7 +17,7 @@ if (process.env.AWSW_EXEC_MODULE) {
       `Invalid env AWSW_EXEC_MODULE @awsw/${moduleName} not installed`
     );
   });
-  if (module && "run" in module) module.run(Config);
+  if (module && "run" in module) module.run({ Config, buildDev, buildProd });
   else {
     console.error(
       `Invalid env AWSW_EXEC_MODULE module @awsw/${moduleName} has no export "run"`
@@ -26,6 +26,13 @@ if (process.env.AWSW_EXEC_MODULE) {
 }
 // If there's no exec module run the standard logic
 else {
+  try {
+    await Promise.all([buildDev(), buildProd()]);
+  } catch (err) {
+    if (err instanceof Error) console.error(err.message);
+    else console.error(err);
+    process.exit(-1);
+  }
   const s3Client = new S3Client({
     region: Config.BucketRegion,
     credentials: Config.AwsCredentials,

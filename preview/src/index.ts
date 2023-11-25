@@ -2,7 +2,7 @@
 import http, { IncomingMessage, ServerResponse } from "http";
 import fs from "fs";
 import mime from "mime";
-import type { ConfigType, Configuration } from "../../core/src";
+import type { Configuration, RunFunction } from "../../core/src";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { Readable, Stream, Transform } from "stream";
@@ -19,7 +19,7 @@ export const CustomConfig = {
   },
 } as const satisfies Configuration;
 
-export const run = (Config: ConfigType<typeof CustomConfig>) => {
+export const run: RunFunction<typeof CustomConfig> = ({ Config, buildDev }) => {
   const root = Config.SourcePath;
   const errorDocument = Config.ErrorDocument;
   const port = Config.PreviewPort;
@@ -65,16 +65,28 @@ export const run = (Config: ConfigType<typeof CustomConfig>) => {
   );
 
   // Listen to changes in the filesystem to resolve pending promises
-  fs.watch(root, { recursive: true }).addListener("change", (_, filename) => {
-    const file = typeof filename === "string" ? filename : filename.toString();
-    const event = file.endsWith("css") ? "css" : "reload";
-    // Re-check if error doc exists now
-    fileExists(root + errorDocument).then(
-      (exists) => (errorDocumentExists = exists)
-    );
-    fsChangePromise.resolve(event);
-    fsChangePromise = createResolvablePromise();
-  });
+  fs.watch(root, { recursive: true }).addListener(
+    "change",
+    async (_, filename) => {
+      const file =
+        typeof filename === "string" ? filename : filename.toString();
+      const event = file.endsWith("css") ? "css" : "reload";
+      // Re-check if error doc exists now
+      fileExists(root + errorDocument).then(
+        (exists) => (errorDocumentExists = exists)
+      );
+      try {
+        await buildDev();
+      } catch (err) {
+        if (err instanceof Error) console.error(err.message);
+        else console.error(err);
+        // Don't resolve promise as there was an issue
+        return;
+      }
+      fsChangePromise.resolve(event);
+      fsChangePromise = createResolvablePromise();
+    }
+  );
 
   const processRequest = async (
     res: http.ServerResponse,
