@@ -1,13 +1,15 @@
 import fs from "fs";
 import yaml from "yaml";
 
+type Types = "string" | "boolean" | "number" | "string[]";
 type TypeMapper = {
   string: string;
   number: number;
   boolean: boolean;
+  "string[]": string[];
 };
 type ConfigurationValidator<
-  T extends "string" | "boolean" | "number" = "string",
+  T extends Types = "string",
   Type = TypeMapper[T]
 > = {
   type?: T;
@@ -17,7 +19,8 @@ export type Configuration = {
   [key: string]:
     | ConfigurationValidator<"boolean">
     | ConfigurationValidator<"number">
-    | ConfigurationValidator<"string">;
+    | ConfigurationValidator<"string">
+    | ConfigurationValidator<"string[]">;
 };
 type ConfigurationValidators = keyof typeof configValidator;
 type BaseConfiguration = {
@@ -140,6 +143,15 @@ const loadConfigFile = (): unknown => {
   }
 };
 
+const isOfType = <T extends Types>(value: unknown, type: T): value is any => {
+  if (type.endsWith("[]")) {
+    const innerType = type.substring(0, type.length - 2) as Types;
+    return (
+      Array.isArray(value) && value.every((entry) => isOfType(entry, innerType))
+    );
+  } else return typeof value === type;
+};
+
 const validateConfig = (unsafeConfigIn: unknown): BaseConfiguration => {
   if (!(unsafeConfigIn && typeof unsafeConfigIn === "object"))
     terminate(`${configFile} must be a valid key-value object`);
@@ -169,11 +181,10 @@ const validateConfig = (unsafeConfigIn: unknown): BaseConfiguration => {
       }
     }
     const type = "type" in validator ? validator.type : "string";
-    if (typeof value !== type) invalidKeys.push({ key, expected: type, value });
-    else {
+    if (isOfType(value, type)) {
       if ("parser" in validator) config[key] = validator.parser(value) as any;
       else config[key] = value;
-    }
+    } else invalidKeys.push({ key, expected: type, value });
   }
 
   if (missingKeys.length | invalidKeys.length) {
