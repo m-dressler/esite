@@ -152,8 +152,6 @@ export const run = (Config: ConfigType<typeof CustomConfig>) => {
   );
 };
 
-process.env.AWSW_LOAD_MODULES =
-  (process.env.AWSW_LOAD_MODULES || "") + "preview,";
 process.env.AWSW_EXEC_MODULE = "preview";
 
 // @ts-expect-error

@@ -89,28 +89,12 @@ const configValidator = {
     type: "boolean",
     default: true,
   },
+  Modules: {
+    optional: true,
+    type: "string[]",
+    default: [] as string[],
+  },
 } as const satisfies Configuration;
-
-if (process.env.AWSW_LOAD_MODULES) {
-  const moduleNames = process.env.AWSW_LOAD_MODULES.split(",");
-  // Remove trailing comma module
-  moduleNames.splice(moduleNames.length - 1, 1);
-  for (let i = 0; i < moduleNames.length; ++i) {
-    const moduleName = moduleNames[i];
-    const module = await import("@awsw/" + moduleName).catch(() => {
-      console.error(
-        `Invalid env AWSW_LOAD_MODULES module @awsw/${moduleName} not installed`
-      );
-    });
-    if ("CustomConfig" in module) {
-      Object.assign(configValidator, module.CustomConfig);
-    } else {
-      console.error(
-        `Invalid env AWSW_LOAD_MODULES module @awsw/${moduleName} has no export "CustomConfig"`
-      );
-    }
-  }
-}
 
 const logError = (...args: [any, ...any[]]) =>
   console.error("\x1b[31m" + args[0].toString(), ...args.slice(1), "\x1b[31m");
@@ -132,12 +116,44 @@ const getAwsCredentials = () => {
   } as const;
 };
 
-const loadConfigFile = (): unknown => {
+const loadOtherModules = async (modules: string[]) => {
+  let hadErrors = false;
+  for (let i = 0; i < modules.length; ++i) {
+    const moduleName = modules[i];
+    const module = await import("@awsw/" + moduleName).catch(() => {
+      logError(`Couldn't load module @awsw/${moduleName} not installed`);
+      hadErrors = true;
+    });
+    if (!module) continue;
+    if ("CustomConfig" in module)
+      Object.assign(configValidator, module.CustomConfig);
+    else {
+      logError(
+        `Invalid module @awsw/${moduleName} has no export "CustomConfig"`
+      );
+      hadErrors = true;
+    }
+  }
+
+  if (hadErrors) terminate();
+};
+
+const loadConfigFile = async (): Promise<{ [key: string]: string }> => {
   try {
-    const config = fs.readFileSync(configFile, {
+    const configString = fs.readFileSync(configFile, {
       encoding: "utf-8",
     });
-    return yaml.parse(config);
+    const config = yaml.parse(configString);
+    if (!(config && typeof config === "object"))
+      terminate(`${configFile} must be a valid key-value object`);
+    const execModule = process.env.AWSW_EXEC_MODULE;
+    if (execModule) {
+      if (!config.Modules) config.Modules = [execModule];
+      else if (Array.isArray(config.Modules)) config.Modules.push(execModule);
+    }
+    if (config.Modules && Array.isArray(config.Modules))
+      await loadOtherModules(config.Modules);
+    return config;
   } catch (error) {
     throw terminate("Could not read " + configFile);
   }
@@ -152,11 +168,9 @@ const isOfType = <T extends Types>(value: unknown, type: T): value is any => {
   } else return typeof value === type;
 };
 
-const validateConfig = (unsafeConfigIn: unknown): BaseConfiguration => {
-  if (!(unsafeConfigIn && typeof unsafeConfigIn === "object"))
-    terminate(`${configFile} must be a valid key-value object`);
-  const unsafeConfig = unsafeConfigIn as { [key: string]: any };
-
+const validateConfig = (unsafeConfig: {
+  [key: string]: any;
+}): BaseConfiguration => {
   const configKeys = Object.keys(configValidator) as ConfigurationValidators[];
   const alienKeys = Object.keys(unsafeConfig).filter(
     (key) => !configKeys.includes(key as any)
@@ -207,7 +221,7 @@ const validateConfig = (unsafeConfigIn: unknown): BaseConfiguration => {
 };
 
 const AwsCredentials = getAwsCredentials();
-const unsafeConfig = loadConfigFile();
+const unsafeConfig = await loadConfigFile();
 const configFileContent = validateConfig(unsafeConfig);
 
 export const Config = { AwsCredentials, ...configFileContent } as const;
