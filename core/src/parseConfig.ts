@@ -40,12 +40,6 @@ export type RunFunction<T extends Configuration = {}> = (params: {
   buildProd: typeof buildProd;
 }) => any;
 
-class ParseError extends Error {
-  constructor(expected: string) {
-    super(expected);
-  }
-}
-
 const configFile = "aws-website-config.yaml";
 
 const validateLocalPath = (str: string) => {
@@ -53,9 +47,9 @@ const validateLocalPath = (str: string) => {
   if (!str.endsWith("/")) str += "/";
   // Guarantees is relative
   if (!str.startsWith("./"))
-    throw new ParseError(
-      'Source path should be relative in the project (start with "./")'
-    );
+    throw {
+      expected: 'a relative in the project (start with "./")',
+    };
   return str;
 };
 
@@ -218,9 +212,16 @@ const validateConfig = (unsafeConfig: {
     }
     const type = "type" in validator ? validator.type : "string";
     if (isOfType(value, type)) {
-      if ("parser" in validator) config[key] = validator.parser(value) as any;
-      else config[key] = value;
-    } else invalidKeys.push({ key, expected: type, value });
+      if ("parser" in validator) {
+        try {
+          config[key] = validator.parser(value) as any;
+        } catch (err) {
+          if (err && typeof err === "object" && "expected" in err && typeof err.expected === 'string')
+            invalidKeys.push({ key, expected: err.expected, value });
+          else throw err;
+        }
+      } else config[key] = value;
+    } else invalidKeys.push({ key, expected: "of type " + type, value });
   }
 
   if (missingKeys.length | invalidKeys.length) {
@@ -229,7 +230,7 @@ const validateConfig = (unsafeConfig: {
     if (invalidKeys.length) {
       logError("Invalid keys:");
       for (const { key, expected, value } of invalidKeys)
-        logError(`\t- "${key}" should be of type ${expected} but got ${value}`);
+        logError(`\t- "${key}" should be ${expected} but got "${value}"`);
     }
     terminate();
   }
