@@ -274,9 +274,13 @@ export const buildDev = async () => {
   await fs.mkdir(Config.BuildPath, { recursive: true });
   // Clear build directory
   const files = await fs.readdir(Config.BuildPath);
-  await Promise.all(files.map((file) => fs.rm(Config.BuildPath + "/" + file)));
+  await Promise.all(
+    files.map((file) =>
+      fs.rm(Config.BuildPath + "/" + file, { recursive: true })
+    )
+  );
   // Copy all files to build
-  fs.cp(Config.SourcePath, Config.BuildPath, { recursive: true });
+  await fs.cp(Config.SourcePath, Config.BuildPath, { recursive: true });
   // Start build process
   await buildAll(devBuilds, "Dev");
 };
