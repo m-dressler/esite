@@ -10,7 +10,7 @@ const exec = promisify(child_process.exec);
 
 const args = process.argv.slice(2);
 const projectIndex = args.indexOf("--project");
-let project = projectIndex ? void 0 : args[projectIndex + 1];
+let project = projectIndex === -1 ? void 0 : args[projectIndex + 1];
 if (!project) {
   console.log("Select project:");
   const files = await fs.promises.readdir(".");
