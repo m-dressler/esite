@@ -69,7 +69,7 @@ export const run: RunFunction<typeof CustomConfig> = async ({
   );
 
   // Listen to changes in the filesystem to resolve pending promises
-  fs.watch(root, { recursive: true }).addListener(
+  fs.watch(Config.SourcePath, { recursive: true }).addListener(
     "change",
     async (_, filename) => {
       const file =
