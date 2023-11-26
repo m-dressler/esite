@@ -24,7 +24,7 @@ export const run: RunFunction<typeof CustomConfig> = async ({
   buildDev,
 }) => {
   await buildDev();
-  const root = Config.SourcePath;
+  const root = Config.BuildPath;
   const errorDocument = Config.ErrorDocument;
   const port = Config.PreviewPort;
   const previewJsPath =
