@@ -75,10 +75,6 @@ export const run: RunFunction<typeof CustomConfig> = async ({
       const file =
         typeof filename === "string" ? filename : filename.toString();
       const event = file.endsWith("css") ? "css" : "reload";
-      // Re-check if error doc exists now
-      fileExists(root + errorDocument).then(
-        (exists) => (errorDocumentExists = exists)
-      );
       try {
         await buildDev();
       } catch (err) {
@@ -87,6 +83,10 @@ export const run: RunFunction<typeof CustomConfig> = async ({
         // Don't resolve promise as there was an issue
         return;
       }
+      // Re-check if error doc exists now
+      fileExists(root + errorDocument).then(
+        (exists) => (errorDocumentExists = exists)
+      );
       fsChangePromise.resolve(event);
       fsChangePromise = createResolvablePromise();
     }
