@@ -1,7 +1,7 @@
 import * as crypto from "crypto";
 import { promises as fs } from "fs";
 import "dotenv/config";
-import { BuildFunction, Configuration } from "../../core/src";
+import { Configuration, BuildConfig } from "../../core/src";
 
 const getBufferBase64Parser = (lengths: [number, ...number[]]) => {
   let error = "a base64 encoded key of byte length ";
@@ -45,36 +45,40 @@ const encrypt = async (
   );
 };
 
-export const buildDev: BuildFunction<typeof CustomConfig> = async (Config) => {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    Config.EncryptionKey,
-    "AES-CBC",
-    true,
-    ["encrypt"]
-  );
+export const buildConfig: BuildConfig<typeof CustomConfig> = {
+  step: 1_000_000,
+  devRequired: true,
+  build: async (Config) => {
+    const key = await crypto.subtle.importKey(
+      "raw",
+      Config.EncryptionKey,
+      "AES-CBC",
+      true,
+      ["encrypt"]
+    );
 
-  const files = await fs.readdir(Config.BuildPath, { recursive: true });
-  const encryptFiles = files.filter(
-    (f) => f === encryptFileName || f.endsWith("/" + encryptFileName)
-  );
+    const files = await fs.readdir(Config.BuildPath, { recursive: true });
+    const encryptFiles = files.filter(
+      (f) => f === encryptFileName || f.endsWith("/" + encryptFileName)
+    );
 
-  const applyEncryptFile = async (path: string) => {
-    const folder = path.substring(0, path.lastIndexOf("/") + 1);
-    await fs.rm(path);
-    const files = await fs.readdir(folder, { recursive: true });
+    const applyEncryptFile = async (path: string) => {
+      const folder = path.substring(0, path.lastIndexOf("/") + 1);
+      await fs.rm(path);
+      const files = await fs.readdir(folder, { recursive: true });
 
-    for (let i = 0; i < files.length; ++i) {
-      const filePath = folder + files[i];
-      const stat = await fs.stat(filePath);
-      if (!stat.isDirectory()) {
-        const content = await fs.readFile(filePath);
-        const encrypted = await encrypt(key, content);
-        await fs.writeFile(filePath, encrypted);
+      for (let i = 0; i < files.length; ++i) {
+        const filePath = folder + files[i];
+        const stat = await fs.stat(filePath);
+        if (!stat.isDirectory()) {
+          const content = await fs.readFile(filePath);
+          const encrypted = await encrypt(key, content);
+          await fs.writeFile(filePath, encrypted);
+        }
       }
-    }
-  };
+    };
 
-  for (let i = 0; i < encryptFiles.length; ++i)
-    await applyEncryptFile(Config.BuildPath + encryptFiles[i]);
+    for (let i = 0; i < encryptFiles.length; ++i)
+      await applyEncryptFile(Config.BuildPath + encryptFiles[i]);
+  },
 };

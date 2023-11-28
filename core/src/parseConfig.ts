@@ -31,13 +31,17 @@ type ConfigValue<T extends Configuration> = {
       TypeMapper[T[key]["type"]]
     : string;
 };
-export type BuildFunction<T extends Configuration = {}> = (
-  config: typeof Config & ConfigValue<T>
-) => any;
+export type BuildConfig<T extends Configuration = {}> = {
+  /** The function that builds the step */
+  build: (config: typeof Config & ConfigValue<T>) => any;
+  /** Low step BuildConfigs run before high step BuildConfigs while all same step configs may be run in parallel */
+  step: number;
+  /** If this step is required to create the dev version of the project */
+  devRequired: boolean;
+};
 export type RunFunction<T extends Configuration = {}> = (params: {
   Config: typeof Config & ConfigValue<T>;
-  buildDev: typeof buildDev;
-  buildProd: typeof buildProd;
+  build: typeof build;
 }) => any;
 
 const configFile = "aws-website-config.yaml";
@@ -125,11 +129,14 @@ const getAwsCredentials = () => {
   } as const;
 };
 
-const devBuilds: BuildFunction[] = [];
-const prodBuilds: BuildFunction[] = [];
+/** A sorted array of individual build steps grouped by parallelizable steps */
+const buildSteps: Omit<BuildConfig, "step">[][] = [[]];
 
 const loadOtherModules = async (modules: string[]) => {
   let hadErrors = false;
+  /** The build steps loaded from @awsw/* modules */
+  const loadedBuildSteps: BuildConfig[] = [];
+
   for (let i = 0; i < modules.length; ++i) {
     const moduleName = modules[i];
     const module = await import("@awsw/" + moduleName).catch(() => {
@@ -137,8 +144,7 @@ const loadOtherModules = async (modules: string[]) => {
       hadErrors = true;
     });
     if (!module) continue;
-    if ("buildDev" in module) devBuilds.push(module.buildDev);
-    if ("buildProd" in module) prodBuilds.push(module.buildProd);
+    if ("buildConfig" in module) loadedBuildSteps.push(module.buildConfig);
     if ("CustomConfig" in module)
       Object.assign(configValidator, module.CustomConfig);
     else {
@@ -147,6 +153,18 @@ const loadOtherModules = async (modules: string[]) => {
       );
       hadErrors = true;
     }
+  }
+  // Sort builds by build step 
+  loadedBuildSteps.sort((a, b) => a.step - b.step);
+  // Group builds in the same step
+  for (let i = 0; i < loadedBuildSteps.length; ++i) {
+    const { step, build, devRequired } = loadedBuildSteps[i];
+    buildSteps[buildSteps.length - 1].push({ devRequired, build });
+    if (
+      i !== loadedBuildSteps.length - 1 &&
+      step !== loadedBuildSteps[i + 1].step
+    )
+      buildSteps.push([]);
   }
 
   if (hadErrors) terminate();
@@ -216,7 +234,12 @@ const validateConfig = (unsafeConfig: {
         try {
           config[key] = validator.parser(value) as any;
         } catch (err) {
-          if (err && typeof err === "object" && "expected" in err && typeof err.expected === 'string')
+          if (
+            err &&
+            typeof err === "object" &&
+            "expected" in err &&
+            typeof err.expected === "string"
+          )
             invalidKeys.push({ key, expected: err.expected, value });
           else throw err;
         }
@@ -249,29 +272,7 @@ const configFileContent = validateConfig(unsafeConfig);
 
 export const Config = { AwsCredentials, ...configFileContent } as const;
 
-const buildAll = async (builds: BuildFunction[], buildName: string) => {
-  let promises = [];
-  for (let i = 0; i < builds.length; ++i) {
-    try {
-      const promise = builds[i](Config as ConfigValue<{}> & typeof Config);
-      promises.push(promise);
-    } catch (error) {
-      promises.push(Promise.reject(error));
-    }
-  }
-
-  const result = await Promise.allSettled(promises);
-  const failed = result.filter(
-    (res) => res.status === "rejected"
-  ) as PromiseRejectedResult[];
-  for (let i = 0; i < failed.length; ++i) {
-    const error = failed[i].reason;
-    if (error instanceof Error) logError(error.message);
-    else logError(error);
-  }
-  if (failed.length) throw new Error(buildName + " build failed");
-};
-export const buildDev = async () => {
+export const build = async (type: "dev" | "prod") => {
   await fs.mkdir(Config.BuildPath, { recursive: true });
   // Clear build directory
   const files = await fs.readdir(Config.BuildPath);
@@ -283,9 +284,28 @@ export const buildDev = async () => {
   // Copy all files to build
   await fs.cp(Config.SourcePath, Config.BuildPath, { recursive: true });
   // Start build process
-  await buildAll(devBuilds, "Dev");
-};
-export const buildProd = async () => {
-  await buildDev();
-  await buildAll(prodBuilds, "Prod");
+
+  const config = Config as ConfigValue<{}> & typeof Config;
+
+  for (let i = 0; i < buildSteps.length; ++i) {
+    let steps = buildSteps[i];
+    // If we are building for dev but it's not required, skip
+    if (type === "dev") steps.filter((s) => s.devRequired);
+
+    // Run all steps in parallel and wait for result
+    const result = await Promise.allSettled(
+      steps.map((step) => step.build(config))
+    );
+    const failed = result.filter(
+      (res) => res.status === "rejected"
+    ) as PromiseRejectedResult[];
+    // Log any errors with builds in step
+    for (let i = 0; i < failed.length; ++i) {
+      const error = failed[i].reason;
+      if (error instanceof Error) logError(error.message);
+      else logError(error);
+    }
+    // If step failed abort build
+    if (failed.length) throw new Error(type + " build failed");
+  }
 };

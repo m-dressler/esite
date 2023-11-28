@@ -21,9 +21,9 @@ export const CustomConfig = {
 
 export const run: RunFunction<typeof CustomConfig> = async ({
   Config,
-  buildDev,
+  build,
 }) => {
-  await buildDev();
+  await build("dev");
   const root = Config.BuildPath;
   const errorDocument = Config.ErrorDocument;
   const port = Config.PreviewPort;
@@ -76,7 +76,7 @@ export const run: RunFunction<typeof CustomConfig> = async ({
         typeof filename === "string" ? filename : filename.toString();
       const event = file.endsWith("css") ? "css" : "reload";
       try {
-        await buildDev();
+        await build("dev");
       } catch (err) {
         if (err instanceof Error) console.error(err.message);
         else console.error(err);
