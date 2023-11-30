@@ -1,14 +1,21 @@
-# AWS WEBSITE
+# @awsw/minify
 
-A utility to manage and publish a (static) HTML website to AWS, invalidating cache 
+Optimizes awsw projects by minifying HTML, JavaScript, and CSS files for public deployement.
 
-# INITIALIZE
+## How to use
 
-Create with package `create-aws-website`
+Ensure you have `@awsw/core` installed and add `"minify"` to the `Modules` to your `aws-website-config.yaml` .
 
-```
-npx create-aws-website
-```
-```
-pnpm exec create-aws-website
-```
+## Configurations
+
+- MinifyImages
+  - Description: Toggles if images should also be minified (jpg, png, webp, gif)
+  - Type: boolean
+  - Optional: true
+  - Default: true
+- MinifyHtmlComments
+  - Description: Toggles if HTML Comments should be omitted
+  - Type: boolean
+  - Optional: true
+  - Default: true
+  
