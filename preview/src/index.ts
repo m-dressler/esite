@@ -92,6 +92,13 @@ export const run: RunFunction<typeof CustomConfig> = async ({
     }
   );
 
+  const isEncrypted = Config.Modules?.includes("encrypt")
+    ? (path: string) =>
+        ((Config as any).EncryptedPaths as string[]).some((encrypted) =>
+          path.startsWith(encrypted)
+        )
+    : () => false;
+
   const processRequest = async (
     res: http.ServerResponse,
     path: string
@@ -105,7 +112,9 @@ export const run: RunFunction<typeof CustomConfig> = async ({
 
       const stream = fs.createReadStream(root + path);
       const isSvg = path.endsWith(".svg");
-      if (!(path.endsWith(".html") || isSvg)) return void stream.pipe(res);
+      const appendRefreshScript =
+        (path.endsWith(".html") || isSvg) && !isEncrypted(path.substring(1));
+      if (!appendRefreshScript) return void stream.pipe(res);
 
       const concatStream = ConcatStream();
 

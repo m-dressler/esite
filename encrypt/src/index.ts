@@ -62,8 +62,12 @@ export const buildConfig: BuildConfig<typeof CustomConfig> = {
       (f) => f === encryptFileName || f.endsWith("/" + encryptFileName)
     );
 
+    const encryptedPaths = [] as string[];
+    Object.assign(Config, { EncryptedPaths: encryptedPaths });
+
     const applyEncryptFile = async (path: string) => {
       const folder = path.substring(0, path.lastIndexOf("/") + 1);
+      encryptedPaths.push(folder.replace(Config.BuildPath, ""));
       await fs.rm(path);
       const files = await fs.readdir(folder, { recursive: true });
 
