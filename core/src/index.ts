@@ -56,7 +56,7 @@ else {
     const files = fs
       .readdirSync(dir)
       // Ignore non-content files
-      .filter((path) => path.endsWith("/.DS_Store"));
+      .filter((path) => !path.endsWith("/.DS_Store"));
     const promises: Promise<any>[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
