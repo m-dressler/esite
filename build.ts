@@ -39,8 +39,10 @@ if (args.includes("--version")) {
   const coreIndexJs = JSON.parse(
     fs.readFileSync("./core/package.json", "utf-8")
   );
-  const version = coreIndexJs.version.split(".");
-  version[versions.indexOf(versionChange)]++;
+  const version = coreIndexJs.version.split(".").map(Number) as number[];
+  const versionIndex = versions.indexOf(versionChange);
+  version[versionIndex]++;
+  for (let i = versionIndex + 1; i < version.length; ++i) version[i] = 0;
   const versionStr = version.join(".");
 
   const updateVersion = (module: string) => {
