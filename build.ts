@@ -11,42 +11,62 @@ const exec = promisify(child_process.exec);
 const args = process.argv.slice(2);
 const projectIndex = args.indexOf("--project");
 let project = projectIndex === -1 ? void 0 : args[projectIndex + 1];
+
+const getModuleNames = () => {
+  const files = fs.readdirSync(".");
+  return files.filter(
+    (f) =>
+      f !== "node_modules" &&
+      !f.includes(".") &&
+      fs.existsSync("./" + f + "/package.json")
+  );
+};
+
+if (args.includes("--version")) {
+  const versions = ["major", "minor", "patch"] as const;
+  let versionChange = args[
+    args.indexOf("--version") + 1
+  ] as (typeof versions)[number];
+  if (!versions.includes(versionChange))
+    versionChange = await inquirer
+      .prompt({
+        type: "list",
+        name: "version",
+        message: "Select a version:",
+        choices: [...versions].reverse(),
+      })
+      .then((res) => res.version);
+  const coreIndexJs = JSON.parse(
+    fs.readFileSync("./core/package.json", "utf-8")
+  );
+  const version = coreIndexJs.version.split(".");
+  version[versions.indexOf(versionChange)]++;
+  const versionStr = version.join(".");
+
+  const updateVersion = (module: string) => {
+    const path = `./${module}/package.json`;
+    const pckg = JSON.parse(fs.readFileSync(path, "utf-8"));
+    pckg.version = versionStr;
+    fs.writeFileSync(path, JSON.stringify(pckg, null, 2));
+  };
+  getModuleNames().forEach(updateVersion);
+  process.exit(0);
+}
+
 if (!project) {
   console.log("Select project:");
-  const files = await fs.promises.readdir(".");
-  const projects = files.filter(
-    (f) => f !== "node_modules" && !f.includes(".")
-  );
+  const modules = getModuleNames();
   const result = (await inquirer.prompt({
     type: "list",
     name: "project",
     message: "Select a project to build:",
-    choices: projects,
-  })) as { project: (typeof projects)[number] };
+    choices: modules,
+  })) as { project: (typeof modules)[number] };
   project = result.project;
 }
 
 const projectPath = `./${project}/`;
 const buildFolderName = projectPath + "lib/";
-
-if (args.includes("--version")) {
-  let version = args[args.indexOf("--version") + 1];
-  const versions = ["patch", "minor", "major"];
-  if (!versions.includes(version))
-    version = await inquirer
-      .prompt({
-        type: "list",
-        name: "version",
-        message: "Select a version:",
-        choices: versions,
-      })
-      .then((res) => res.version);
-  const { stdout } = await exec("pnpm version " + version, {
-    cwd: projectPath,
-  });
-  console.log(stdout);
-  process.exit(0);
-}
 
 if (!(args.includes("--build") || args.includes("--publish"))) {
   console.error(
