@@ -54,15 +54,14 @@ else {
 
   const uploadDir = async (dir: string) => {
     const files = fs
-      .readdirSync(dir)
+      .readdirSync(dir, { recursive: true, encoding: "utf-8" })
       // Ignore non-content files
       .filter((path) => !path.endsWith("/.DS_Store"));
     const promises: Promise<any>[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const promise = fs.promises.stat(dir + file).then(async (res) => {
-        if (res.isDirectory()) await uploadDir(dir + file + "/");
-        else await uploadFile(dir + file);
+        if (!res.isDirectory()) await uploadFile(dir + file);
       });
       promises.push(promise);
     }
