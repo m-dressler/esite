@@ -52,11 +52,22 @@ else {
     );
   };
 
+  const pathFilter = (() => {
+    const index = process.argv.indexOf("--path");
+    if (index === -1) return undefined;
+    else return process.argv[index + 1]?.split(",");
+  })();
+  const filterFiles = (path: string): boolean => {
+    if (path.endsWith("/.DS_Store")) return false;
+    if (pathFilter && !pathFilter.includes(path)) return false;
+    return true;
+  };
+
   const uploadDir = async (dir: string) => {
     const files = fs
       .readdirSync(dir, { recursive: true, encoding: "utf-8" })
       // Ignore non-content files
-      .filter((path) => !path.endsWith("/.DS_Store"));
+      .filter(filterFiles);
     const promises: Promise<any>[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
