@@ -6,6 +6,7 @@ import type { Configuration, RunFunction } from "../../core/src";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { Readable, Stream, Transform } from "stream";
+import crypto from "crypto";
 
 export const CustomConfig = {
   ErrorDocument: {
@@ -18,6 +19,13 @@ export const CustomConfig = {
     default: 8080,
   },
 } as const satisfies Configuration;
+
+const checksum = async (filePath: string): Promise<Buffer> => {
+  const hash = crypto.createHash("sha1");
+  const stream = fs.createReadStream(filePath);
+  stream.pipe(hash);
+  return new Promise((res) => stream.on("end", () => res(hash.end().read())));
+};
 
 export const run: RunFunction<typeof CustomConfig> = async ({
   Config,
@@ -68,12 +76,16 @@ export const run: RunFunction<typeof CustomConfig> = async ({
     (exists) => (errorDocumentExists = exists)
   );
 
+  const checksumCache: { [filename: string]: Buffer } = {};
   // Listen to changes in the filesystem to resolve pending promises
   fs.watch(Config.SourcePath, { recursive: true }).addListener(
     "change",
     async (_, filename) => {
       const file =
         typeof filename === "string" ? filename : filename.toString();
+      const hash = await checksum(Config.SourcePath + file);
+      if (checksumCache[file] && hash.equals(checksumCache[file])) return;
+      checksumCache[file] = hash;
       const event = file.endsWith("css") ? "css" : "reload";
       try {
         await build("dev");
