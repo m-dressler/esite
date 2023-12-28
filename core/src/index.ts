@@ -69,8 +69,10 @@ else {
       // Ignore non-content files
       .filter(filterFiles);
     const promises: Promise<any>[] = [];
+    const trace = process.argv.includes("--trace");
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+      if (trace) console.log("Uploading", file);
       const promise = fs.promises.stat(dir + file).then(async (res) => {
         if (!res.isDirectory()) await uploadFile(dir + file);
       });
