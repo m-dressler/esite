@@ -36,14 +36,14 @@ if (args.includes("--version")) {
         choices: [...versions].reverse(),
       })
       .then((res) => res.version);
-  const coreIndexJs = JSON.parse(
-    fs.readFileSync("./core/package.json", "utf-8")
-  );
-  const version = coreIndexJs.version.split(".").map(Number) as number[];
+  const indexJs = JSON.parse(fs.readFileSync("./package.json", "utf-8"));
+  const version = indexJs.version.split(".").map(Number) as number[];
   const versionIndex = versions.indexOf(versionChange);
   version[versionIndex]++;
   for (let i = versionIndex + 1; i < version.length; ++i) version[i] = 0;
   const versionStr = version.join(".");
+  indexJs.version = versionStr;
+  fs.writeFileSync("./package.json", JSON.stringify(indexJs, null, 2));
 
   const updateVersion = (module: string) => {
     const path = `./${module}/package.json`;
@@ -52,6 +52,7 @@ if (args.includes("--version")) {
     fs.writeFileSync(path, JSON.stringify(pckg, null, 2));
   };
   getModuleNames().forEach(updateVersion);
+
   process.exit(0);
 }
 
