@@ -19,7 +19,9 @@ if ("fetch" in window) {
       });
     };
     const listenForNextEvent = async () => {
-      const res = await fetch("/-/awsw-preview/listen.js");
+      const res = await fetch("/-/awsw-preview/listen.js").catch(
+        (): { ok: false } => ({ ok: false })
+      );
       if (!res.ok) await new Promise((res) => setTimeout(res, 500));
       else {
         const { event } = await res.json();
