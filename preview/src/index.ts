@@ -82,10 +82,14 @@ export const run: RunFunction<typeof CustomConfig> = async ({
     "change",
     async (_, filename) => {
       const file =
-        typeof filename === "string" ? filename : filename.toString();
-      const hash = await checksum(Config.SourcePath + file);
-      if (checksumCache[file] && hash.equals(checksumCache[file])) return;
-      checksumCache[file] = hash;
+        Config.SourcePath +
+        (typeof filename === "string" ? filename : filename.toString());
+      const stat = await fs.promises.stat(file);
+      if (!stat.isDirectory()) {
+        const hash = await checksum(Config.SourcePath + file);
+        if (checksumCache[file] && hash.equals(checksumCache[file])) return;
+        checksumCache[file] = hash;
+      }
       const event = file.endsWith("css") ? "css" : "reload";
       try {
         await build("dev");
