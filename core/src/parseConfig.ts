@@ -154,7 +154,7 @@ const loadOtherModules = async (modules: string[]) => {
       hadErrors = true;
     }
   }
-  // Sort builds by build step 
+  // Sort builds by build step
   loadedBuildSteps.sort((a, b) => a.step - b.step);
   // Group builds in the same step
   for (let i = 0; i < loadedBuildSteps.length; ++i) {
@@ -290,7 +290,10 @@ export const build = async (type: "dev" | "prod") => {
   for (let i = 0; i < buildSteps.length; ++i) {
     let steps = buildSteps[i];
     // If we are building for dev but it's not required, skip
-    if (type === "dev") steps.filter((s) => s.devRequired);
+    if (type === "dev") steps = steps.filter((s) => s.devRequired);
+
+    // Skip immediately if not necessary
+    if (steps.length === 0) continue;
 
     // Run all steps in parallel and wait for result
     const result = await Promise.allSettled(
