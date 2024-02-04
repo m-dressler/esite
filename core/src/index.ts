@@ -4,8 +4,9 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import mime from "mime";
 import fs from "fs";
 import { CloudFront } from "@aws-sdk/client-cloudfront";
-import { Config, build, RunFunction, BuildConfig } from "./parseConfig.js";
-import type { Configuration } from "./parseConfig.js";
+import { Config, RunFunction, BuildConfig } from "./config.js";
+import { build } from "./build.js";
+import type { Configuration } from "./config.js";
 export { Config, Configuration, RunFunction, BuildConfig };
 
 // If a awsw module set this env var we execute it, not the standard logic
