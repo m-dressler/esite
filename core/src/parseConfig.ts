@@ -302,13 +302,8 @@ export const build = async (type: "dev" | "prod") => {
     const failed = result.filter(
       (res) => res.status === "rejected"
     ) as PromiseRejectedResult[];
-    // Log any errors with builds in step
-    for (let i = 0; i < failed.length; ++i) {
-      const error = failed[i].reason;
-      if (error instanceof Error) logError(error.message);
-      else logError(error);
-    }
     // If step failed abort build
-    if (failed.length) throw new Error(type + " build failed");
+    if (failed.length === 1) throw failed[0].reason;
+    else if (failed.length > 0) throw failed.map((f) => f.reason);
   }
 };

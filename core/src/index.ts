@@ -28,7 +28,12 @@ else {
   try {
     await build("prod");
   } catch (err) {
+    console.error("Build failed:");
     if (err instanceof Error) console.error(err.message);
+    else if (Array.isArray(err))
+      err.forEach((error) =>
+        console.error(error instanceof Error ? error.message : error)
+      );
     else console.error(err);
     process.exit(-1);
   }
