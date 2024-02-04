@@ -2,8 +2,7 @@
   "name": "aws-repo-manager",
   "version": "0.5.1",
   "description": "",
-  "main": "lib/index.js",
-  "bin": "lib/index.js",
+  "main": "build.ts",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
