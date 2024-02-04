@@ -27,21 +27,41 @@ const checksum = async (filePath: string): Promise<Buffer> => {
   return new Promise((res) => stream.on("end", () => res(hash.end().read())));
 };
 
+const clearPreviousLine = () => {
+  process.stdout.moveCursor(0, -1); // up one line
+  process.stdout.clearLine(1); // from cursor to end
+};
+
+const getTime = () => {
+  const date = new Date();
+  const time = [date.getHours(), date.getMinutes(), date.getSeconds()];
+  return time.map((t) => (t + "").padStart(2, "0")).join(":");
+};
+
 export const run: RunFunction<typeof CustomConfig> = async ({
   Config,
   build,
 }) => {
-  const rebuild = () =>
-    build("dev").then(
-      () => true,
-      (err) => {
-        console.error("Build failed:" + "\x1b[31;4;1m" + "\n");
-        console.error(err);
-        console.error("\x1b[0m" + "\nFix error and save file to rebuild");
-        return false;
-      }
-    );
-  rebuild();
+  const rebuild = async (finalLog = true) => {
+    const start = performance.now();
+    console.log(getTime(), "| Building");
+    try {
+      build("dev");
+    } catch (err) {
+      console.error(getTime(), "| Build failed:" + "\x1b[31;4;1m" + "\n");
+      console.error(err);
+      console.error("\x1b[0m" + "\nFix error and save file to rebuild");
+      return false;
+    }
+    clearPreviousLine();
+    if (finalLog)
+      console.log(
+        getTime(),
+        `| Built (${(performance.now() - start).toFixed(1)}ms)`
+      );
+    return true;
+  };
+  rebuild(false);
   const root = Config.BuildPath;
   const errorDocument = Config.ErrorDocument;
   const port = Config.PreviewPort;
