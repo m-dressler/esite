@@ -44,4 +44,5 @@ Here are available plugins:
 - [@awsw/typescript](https://www.npmjs.com/package/@awsw/typescript): Transpiles typescript files to javascript 
 - [@awsw/scss](https://www.npmjs.com/package/@awsw/scss): Compiles .scss files to css
 - [@awsw/encrypt](https://www.npmjs.com/package/@awsw/encrypt): Allows content encryption to securely deploy secret content on a static website
+- [@awsw/cache-bust](https://www.npmjs.com/package/@awsw/cache-bust): Use hashes to avoid stale browser caches (cache-busting)
  
