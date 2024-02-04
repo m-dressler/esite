@@ -31,7 +31,17 @@ export const run: RunFunction<typeof CustomConfig> = async ({
   Config,
   build,
 }) => {
-  await build("dev");
+  const rebuild = () =>
+    build("dev").then(
+      () => true,
+      (err) => {
+        console.error("Build failed:" + "\x1b[31;4;1m" + "\n");
+        console.error(err);
+        console.error("\x1b[0m" + "\nFix error and save file to rebuild");
+        return false;
+      }
+    );
+  rebuild();
   const root = Config.BuildPath;
   const errorDocument = Config.ErrorDocument;
   const port = Config.PreviewPort;
@@ -91,14 +101,7 @@ export const run: RunFunction<typeof CustomConfig> = async ({
         checksumCache[file] = hash;
       }
       const event = file.endsWith("css") ? "css" : "reload";
-      try {
-        await build("dev");
-      } catch (err) {
-        if (err instanceof Error) console.error(err.message);
-        else console.error(err);
-        // Don't resolve promise as there was an issue
-        return;
-      }
+      if (!(await rebuild())) return;
       // Re-check if error doc exists now
       fileExists(root + errorDocument).then(
         (exists) => (errorDocumentExists = exists)
