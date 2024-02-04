@@ -90,15 +90,16 @@ export const run: RunFunction<typeof CustomConfig> = async ({
   // Listen to changes in the filesystem to resolve pending promises
   fs.watch(Config.SourcePath, { recursive: true }).addListener(
     "change",
-    async (_, filename) => {
-      const file =
-        Config.SourcePath +
-        (typeof filename === "string" ? filename : filename.toString());
-      const stat = await fs.promises.stat(file);
-      if (!stat.isDirectory()) {
-        const hash = await checksum(Config.SourcePath + file);
-        if (checksumCache[file] && hash.equals(checksumCache[file])) return;
-        checksumCache[file] = hash;
+    async (_, whackFilename) => {
+      const filename = whackFilename.toString();
+      const file = Config.SourcePath + filename;
+
+      const stat = await fs.promises.stat(file).catch(() => null);
+      if (stat && !stat.isDirectory()) {
+        const hash = await checksum(file);
+        const cacheValue = checksumCache[filename];
+        if (cacheValue && hash.equals(cacheValue)) return;
+        checksumCache[filename] = hash;
       }
       const event = file.endsWith("css") ? "css" : "reload";
       if (!(await rebuild())) return;
