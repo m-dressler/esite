@@ -1,6 +1,6 @@
 # @awsw/minify
 
-Optimizes awsw projects by minifying HTML, JavaScript, and CSS files for public deployement.
+Optimizes awsw projects by minifying HTML, JavaScript, and CSS files for public deployment.
 
 ## How to use
 
