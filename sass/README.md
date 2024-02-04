@@ -1,14 +1,9 @@
-# AWS WEBSITE
+# @awsw/sass
 
-A utility to manage and publish a (static) HTML website to AWS, invalidating cache 
+Compiles SASS or SCSS files into plain css.
 
-# INITIALIZE
+## How to use
 
-Create with package `create-aws-website`
+Ensure you have `@awsw/core` installed and add `"sass"` to the `Modules`.
 
-```
-npx create-aws-website
-```
-```
-pnpm exec create-aws-website
-```
+Any files ending in `.scss` or `.sass`

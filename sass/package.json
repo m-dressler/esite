@@ -1,0 +1,16 @@
+{
+  "name": "@awsw/sass",
+  "version": "0.5.1",
+  "description": "",
+  "main": "lib/index.js",
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "files": [
+    "lib/**/*"
+  ],
+  "dependencies": {
+    "sass-embedded": "^1.70.0"
+  }
+}
