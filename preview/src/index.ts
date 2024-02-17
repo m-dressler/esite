@@ -46,7 +46,7 @@ export const run: RunFunction<typeof CustomConfig> = async ({
     const start = performance.now();
     console.log(getTime(), "| Building");
     try {
-      build("dev");
+      await build("dev");
     } catch (err) {
       console.error(getTime(), "| Build failed:" + "\x1b[31;4;1m" + "\n");
       console.error(err);
@@ -61,7 +61,7 @@ export const run: RunFunction<typeof CustomConfig> = async ({
       );
     return true;
   };
-  rebuild(false);
+  await rebuild(false);
   const root = Config.BuildPath;
   const errorDocument = Config.ErrorDocument;
   const port = Config.PreviewPort;
