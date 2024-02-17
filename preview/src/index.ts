@@ -42,28 +42,51 @@ export const run: RunFunction<typeof CustomConfig> = async ({
   Config,
   build,
 }) => {
-  const rebuild = async (finalLog = true) => {
-    const start = performance.now();
-    console.log(getTime(), "| Building");
-    try {
-      await build("dev");
-    } catch (err) {
-      console.error(
-        "\x1b[31;4;1m" + getTime(),
-        "| Build failed:" + "\x1b[0m" + "\n"
-      );
-      console.error(err);
-      console.error("\nFix error and save file to rebuild");
-      return false;
-    }
-    clearPreviousLine();
-    if (finalLog)
-      console.log(
-        getTime(),
-        `| Built (${(performance.now() - start).toFixed(1)}ms)`
-      );
-    return true;
-  };
+  const rebuild = (() => {
+    let buildLock: Promise<any> | null = null;
+
+    /** @returns If the build was successful */
+    const m_rebuild = async (finalLog: boolean) => {
+      const start = performance.now();
+      console.log(getTime(), "| Building");
+      try {
+        await build("dev");
+      } catch (err) {
+        console.error(
+          "\x1b[31;4;1m" + getTime(),
+          "| Build failed:" + "\x1b[0m" + "\n"
+        );
+        console.error(err);
+        console.error("\nFix error and save file to rebuild");
+        return false;
+      }
+      clearPreviousLine();
+      if (finalLog)
+        console.log(
+          getTime(),
+          `| Built (${(performance.now() - start).toFixed(1)}ms)`
+        );
+      return true;
+    };
+
+    /**
+     * We wrap the rebuild function in here so we can use `buildLock` to prevent simultaneous builds
+     *
+     * @returns If the build was successful
+     */
+    return async (finalLog = true) => {
+      const buildPromise = buildLock
+        ? buildLock.then(() => m_rebuild(finalLog))
+        : m_rebuild(finalLog);
+      buildLock = buildPromise;
+      return buildPromise.then((success) => {
+        const isLatestBuild = buildLock === buildPromise;
+        buildLock = null;
+        // We only claim it's a success if there isn't a newer build waiting to happen
+        return success && isLatestBuild;
+      });
+    };
+  })();
   await rebuild(false);
   const root = Config.BuildPath;
   const errorDocument = Config.ErrorDocument;
