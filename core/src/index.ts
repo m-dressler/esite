@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import "dotenv/config";
+import "./utilities.js";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import mime from "mime";
 import fs from "fs";

@@ -74,12 +74,6 @@ export const run: RunFunction<typeof CustomConfig> = async ({
     return Object.assign(promise, { resolve });
   };
 
-  const fileExists = (path: string) =>
-    fs.promises.access(path, fs.constants.F_OK).then(
-      () => true,
-      () => false
-    );
-
   const ConcatStream = (streams?: Stream[]) => {
     const m_streams = streams || [];
 
@@ -102,9 +96,9 @@ export const run: RunFunction<typeof CustomConfig> = async ({
   let fsChangePromise = createResolvablePromise();
 
   let errorDocumentExists = false;
-  fileExists(root + errorDocument).then(
-    (exists) => (errorDocumentExists = exists)
-  );
+  fs.promises
+    .exists(root + errorDocument)
+    .then((exists) => (errorDocumentExists = exists));
 
   const checksumCache: { [filename: string]: Buffer } = {};
   // Listen to changes in the filesystem to resolve pending promises
@@ -124,9 +118,9 @@ export const run: RunFunction<typeof CustomConfig> = async ({
       const event = file.endsWith("css") ? "css" : "reload";
       if (!(await rebuild())) return;
       // Re-check if error doc exists now
-      fileExists(root + errorDocument).then(
-        (exists) => (errorDocumentExists = exists)
-      );
+      fs.promises
+        .exists(root + errorDocument)
+        .then((exists) => (errorDocumentExists = exists));
       fsChangePromise.resolve(event);
       fsChangePromise = createResolvablePromise();
     }
@@ -147,7 +141,7 @@ export const run: RunFunction<typeof CustomConfig> = async ({
       fsChangePromise.then((event) =>
         res.writeHead(200).end(JSON.stringify({ event }))
       );
-    } else if (await fileExists(root + path)) {
+    } else if (await fs.promises.exists(root + path)) {
       res.writeHead(200);
 
       const stream = fs.createReadStream(root + path);
