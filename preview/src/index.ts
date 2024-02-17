@@ -48,9 +48,12 @@ export const run: RunFunction<typeof CustomConfig> = async ({
     try {
       await build("dev");
     } catch (err) {
-      console.error(getTime(), "| Build failed:" + "\x1b[31;4;1m" + "\n");
+      console.error(
+        "\x1b[31;4;1m" + getTime(),
+        "| Build failed:" + "\x1b[0m" + "\n"
+      );
       console.error(err);
-      console.error("\x1b[0m" + "\nFix error and save file to rebuild");
+      console.error("\nFix error and save file to rebuild");
       return false;
     }
     clearPreviousLine();
