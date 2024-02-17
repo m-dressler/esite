@@ -1,5 +1,5 @@
 import fs from "fs/promises";
-import { BuildConfig, Config, ConfigValue } from "./config";
+import { BuildConfig, Config, ConfigValue } from "./config.js";
 
 /** A sorted array of individual build steps grouped by parallelizable steps */
 const buildSteps: Omit<BuildConfig, "step">[][] = [[]];
