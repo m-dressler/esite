@@ -39,7 +39,8 @@ const runBuildSteps = async (
 };
 
 export const build = async (type: "dev" | "prod") => {
-  await fs.mkdir(Config.BuildPath, { recursive: true });
+  if (!(await fs.exists(Config.BuildPath)))
+    await fs.mkdir(Config.BuildPath, { recursive: true });
   // Clear build directory
   const files = await fs.readdir(Config.BuildPath);
   await Promise.all(
