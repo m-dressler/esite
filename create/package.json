@@ -1,5 +1,5 @@
 {
-  "name": "@awsw/starter",
+  "name": "create-esite",
   "version": "0.5.2",
   "description": "",
   "main": "lib/index.js",

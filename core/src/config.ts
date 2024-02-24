@@ -45,7 +45,7 @@ export type RunFunction<T extends Configuration = {}> = (params: {
   build: typeof build;
 }) => any;
 
-const configFile = "aws-website-config.yaml";
+const configFile = "esite.yaml";
 
 const validateLocalPath = (str: string) => {
   // Guarantees ends with a slash
@@ -132,13 +132,13 @@ const getAwsCredentials = () => {
 
 const loadOtherModules = async (modules: string[]) => {
   let hadErrors = false;
-  /** The build steps loaded from @awsw/* modules */
+  /** The build steps loaded from @esite/* modules */
   const loadedBuildSteps: BuildConfig[] = [];
 
   for (let i = 0; i < modules.length; ++i) {
     const moduleName = modules[i];
-    const module = await import("@awsw/" + moduleName).catch(() => {
-      logError(`Couldn't load module @awsw/${moduleName} not installed`);
+    const module = await import("@esite/" + moduleName).catch(() => {
+      logError(`Couldn't load module @esite/${moduleName} not installed`);
       hadErrors = true;
     });
     if (!module) continue;
@@ -147,7 +147,7 @@ const loadOtherModules = async (modules: string[]) => {
       Object.assign(configValidator, module.CustomConfig);
     else {
       logError(
-        `Invalid module @awsw/${moduleName} has no export "CustomConfig"`
+        `Invalid module @esite/${moduleName} has no export "CustomConfig"`
       );
       hadErrors = true;
     }
@@ -165,7 +165,7 @@ const loadConfigFile = async (): Promise<{ [key: string]: string }> => {
     const config = yaml.parse(configString);
     if (!(config && typeof config === "object"))
       terminate(`${configFile} must be a valid key-value object`);
-    const execModule = process.env.AWSW_EXEC_MODULE;
+    const execModule = process.env.ESITE_EXEC_MODULE;
     if (execModule) {
       if (!config.Modules) config.Modules = [execModule];
       else if (Array.isArray(config.Modules)) config.Modules.push(execModule);

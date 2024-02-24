@@ -1,12 +1,11 @@
 {
-  "name": "@awsw/core",
+  "name": "@esite/core",
   "version": "0.5.2",
   "description": "",
   "main": "lib/index.js",
   "bin": {
-    "awsw": "lib/index.js",
-    "awsw-core": "lib/index.js",
-    "awswcore": "lib/index.js"
+    "esite": "lib/index.js",
+    "esite-core": "lib/index.js"
   },
   "type": "module",
   "keywords": [],

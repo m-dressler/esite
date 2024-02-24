@@ -7,7 +7,7 @@ export const CustomConfig = {
   CacheBustToken: {
     type: "string",
     optional: true,
-    default: "AWSW_CACHE_BUST",
+    default: "CACHE_BUST",
   },
 } as const satisfies Configuration;
 
@@ -15,7 +15,7 @@ export const CustomConfig = {
 const hashes: { [fileName: string]: string } = {};
 
 export const buildConfig: BuildConfig<typeof CustomConfig> = {
-  step: 5_000,
+  step: 925_000,
   devRequired: false,
   build: async (Config) => {
     const cacheBustPrefix = "[" + Config.CacheBustToken;

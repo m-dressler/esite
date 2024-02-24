@@ -1,34 +1,35 @@
-# @awsw/core
+# @esite packages
 
-A utility to manage and publish a (static) HTML website to S3 and invalidating the CloudFront cache. The @awsw scope also has an extended array of plugins (see [Plugins](#plugins)) 
+esite is a suite of tools to help you set up your website the easy way on your cloud-provider of choice (e.g. AWS or Cloudflare) with a variety of modular extensions designed to make your life easier.
 
 ## Overview
 
 # Table of Contents
 1. [How to use](#how-to-use)
-2. [Plugins](#plugins)
+2. [Cloud Adapters](#cloud-adapters)
+3. [Plugins](#plugins)
 
 ## How to use
 
 ### Starter Project
 
-You can easily create a new project using [@awsw/starter](https://www.npmjs.com/package/@awsw/starter):
+You can easily create a new project using [create-esite@latest](https://www.npmjs.com/package/create-esite):
 
 ```
-npx create-aws-website
+npm create esite@latest
 ```
 ```
-pnpm exec create-aws-website
+pnpm create esite@latest
 ```
 
 ### Manual Setup
 
-Install `@awsw/core`
+Install `@esite/core`
 
 ### Configuring your project
 
 You'll need two things to get started:
-1. a `aws-website-config.yaml` file which contains your configuration with, at minimum:
+1. a `esite.yaml` file which contains your configuration with, at minimum:
     1.   `BucketName` - the name of the bucket in you AWS account
     2.   `BucketRegion` - the AWS region the bucket's in
 2. add `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to your environment variables
@@ -38,11 +39,10 @@ You'll need two things to get started:
 
 Here are available plugins:
 
-- [@awsw/preview](https://www.npmjs.com/package/@awsw/preview): Allows previewing the project locally
-- [@awsw/git](https://www.npmjs.com/package/@awsw/git): Uses git to keep track of changes and prevent unnecessary uploads (faster & cheaper)
-- [@awsw/minify](https://www.npmjs.com/package/@awsw/minify): Minifies HTML, JS, and CSS optimizing storage and faster delivery
-- [@awsw/typescript](https://www.npmjs.com/package/@awsw/typescript): Transpiles typescript files to javascript 
-- [@awsw/scss](https://www.npmjs.com/package/@awsw/scss): Compiles .scss files to css
-- [@awsw/encrypt](https://www.npmjs.com/package/@awsw/encrypt): Allows content encryption to securely deploy secret content on a static website
-- [@awsw/cache-bust](https://www.npmjs.com/package/@awsw/cache-bust): Use hashes to avoid stale browser caches (cache-busting)
-- [@awsw/sass](https://www.npmjs.com/package/@awsw/sass): Compiles sass/scss into plain css
+- [@esite/preview](https://www.npmjs.com/package/@esite/preview): Allows previewing the project locally
+- [@esite/minify](https://www.npmjs.com/package/@esite/minify): Minifies HTML, JS, and CSS optimizing storage and faster delivery
+- [@esite/typescript](https://www.npmjs.com/package/@esite/typescript): Transpiles typescript files to javascript 
+- [@esite/scss](https://www.npmjs.com/package/@esite/scss): Compiles .scss files to css
+- [@esite/encrypt](https://www.npmjs.com/package/@esite/encrypt): Allows content encryption to securely deploy secret content on a static website
+- [@esite/cache-bust](https://www.npmjs.com/package/@esite/cache-bust): Use hashes to avoid stale browser caches (cache-busting)
+- [@esite/sass](https://www.npmjs.com/package/@esite/sass): Compiles sass/scss into plain css

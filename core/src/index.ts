@@ -10,18 +10,18 @@ import { build } from "./build.js";
 import type { Configuration } from "./config.js";
 export { Config, Configuration, RunFunction, BuildConfig };
 
-// If a awsw module set this env var we execute it, not the standard logic
-if (process.env.AWSW_EXEC_MODULE) {
-  const moduleName = process.env.AWSW_EXEC_MODULE;
-  const module = await import("@awsw/" + moduleName).catch(() => {
+// If a esite module set this env var we execute it, not the standard logic
+if (process.env.ESITE_EXEC_MODULE) {
+  const moduleName = process.env.ESITE_EXEC_MODULE;
+  const module = await import("@esite/" + moduleName).catch(() => {
     console.error(
-      `Invalid env AWSW_EXEC_MODULE @awsw/${moduleName} not installed`
+      `Invalid env ESITE_EXEC_MODULE @esite/${moduleName} not installed`
     );
   });
   if (module && "run" in module) (module.run as RunFunction)({ Config, build });
   else {
     console.error(
-      `Invalid env AWSW_EXEC_MODULE module @awsw/${moduleName} has no export "run"`
+      `Invalid env ESITE_EXEC_MODULE module @esite/${moduleName} has no export "run"`
     );
   }
 }

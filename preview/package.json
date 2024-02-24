@@ -1,17 +1,16 @@
 {
-  "name": "@awsw/preview",
+  "name": "@esite/preview",
   "version": "0.5.2",
   "description": "",
   "type": "module",
   "main": "lib/index.js",
   "bin": {
-    "awsw-preview": "./lib/index.js",
-    "awswpreview": "./lib/index.js"
+    "esite-preview": "./lib/index.js",
+    "esitepreview": "./lib/index.js"
   },
   "keywords": [
-    "aws",
-    "s3",
-    "cloudfront"
+    "website",
+    "static-website"
   ],
   "files": [
     "lib/**/*"

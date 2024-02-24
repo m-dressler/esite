@@ -1,14 +1,14 @@
-# @awsw/preview
+# @esite/preview
 
-Enables awsw projects to be previewed in the browser.
+Enables esite projects to be previewed in the browser.
 
 ## How to use
 
-Ensure you have `@awsw/core` installed.
+Ensure you have `@esite/core` installed.
 
-Add a command `"preview": "awsw-preview"` to your package.json scripts and 
+Add a command `"preview": "esite-preview"` to your package.json scripts and 
 
-In your `aws-website-config.yaml` you can specify the following keys:
+In your `esite.yaml` you can specify the following keys:
 
 ```
 PreviewPort: number = 8080

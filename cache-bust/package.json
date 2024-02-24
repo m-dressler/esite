@@ -1,5 +1,5 @@
 {
-  "name": "@awsw/cache-bust",
+  "name": "@esite/cache-bust",
   "version": "0.5.2",
   "description": "",
   "main": "lib/index.js",

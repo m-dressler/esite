@@ -26,7 +26,7 @@ export const CustomConfig = {
   },
 } as const satisfies Configuration;
 
-const encryptFileName = ".awsw-encrypt";
+const encryptFileName = ".esite-encrypt";
 
 const encrypt = async (
   key: crypto.webcrypto.CryptoKey,

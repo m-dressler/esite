@@ -1,10 +1,10 @@
-# @awsw/minify
+# @esite/minify
 
-Optimizes awsw projects by minifying HTML, JavaScript, and CSS files for public deployment.
+Optimizes esite projects by minifying HTML, JavaScript, and CSS files for public deployment.
 
 ## How to use
 
-Ensure you have `@awsw/core` installed and add `"minify"` to the `Modules` to your `aws-website-config.yaml` .
+Ensure you have `@esite/core` installed and add `"minify"` to the `Modules` to your `esite.yaml` .
 
 ## Configurations
 

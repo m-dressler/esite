@@ -1,5 +1,5 @@
 {
-  "name": "aws-repo-manager",
+  "name": "esite-repo-manager",
   "version": "0.5.2",
   "description": "",
   "main": "build.ts",

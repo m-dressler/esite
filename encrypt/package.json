@@ -1,5 +1,5 @@
 {
-  "name": "@awsw/encrypt",
+  "name": "@esite/encrypt",
   "version": "0.5.2",
   "description": "",
   "main": "lib/index.js",

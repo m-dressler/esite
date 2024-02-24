@@ -92,7 +92,7 @@ export const run: RunFunction<typeof CustomConfig> = async ({
   const errorDocument = Config.ErrorDocument;
   const port = Config.PreviewPort;
   const previewJsPath =
-    dirname(fileURLToPath(import.meta.url)) + "/awsw-preview.js";
+    dirname(fileURLToPath(import.meta.url)) + "/esite-preview.js";
 
   const createResolvablePromise = () => {
     let resolve: (event: "css" | "reload") => void = () => {};
@@ -163,7 +163,7 @@ export const run: RunFunction<typeof CustomConfig> = async ({
     res: http.ServerResponse,
     path: string
   ): Promise<void> => {
-    if (path === "/-/awsw-preview/listen.js") {
+    if (path === "/-/esite-preview/listen.js") {
       fsChangePromise.then((event) =>
         res.writeHead(200).end(JSON.stringify({ event }))
       );
@@ -237,16 +237,16 @@ export const run: RunFunction<typeof CustomConfig> = async ({
   );
 };
 
-process.env.AWSW_EXEC_MODULE = "preview";
+process.env.ESITE_EXEC_MODULE = "preview";
 
 // @ts-expect-error
-import("@awsw/core").catch((err) => {
+import("@esite/core").catch((err) => {
   if (
     err instanceof Error &&
     err.message.includes("Cannot find module '") &&
-    err.message.includes("@awsw/core")
+    err.message.includes("@esite/core")
   ) {
-    console.error("@awsw/core not installed - please install it first.");
+    console.error("@esite/core not installed - please install it first.");
     process.exit(1);
   }
   throw err;
