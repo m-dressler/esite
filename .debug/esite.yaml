@@ -3,3 +3,4 @@ BucketRegion: c
 PreviewPort: 3010
 Modules: ["encrypt", "minify"]
 EncryptionKey: KeHNaDKDSiO/7Ov4BHS5EpInj3W8+9iL2LB7KxkfbFo=
+Deploy: s3

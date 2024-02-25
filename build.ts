@@ -15,17 +15,12 @@ const abort = (reason: string) => {
 };
 
 const getModuleNames = () => {
-  const files = fs.readdirSync(".");
-  return files.filter(
-    (f) =>
-      f !== "node_modules" &&
-      !f.includes(".") &&
-      fs.existsSync("./" + f + "/package.json")
-  );
+  const files = fs.readdirSync("./src");
+  return files.filter((f) => fs.existsSync("./src/" + f + "/package.json"));
 };
 
 const buildProject = async (projectName: string) => {
-  const projectPath = `./${projectName}/`;
+  const projectPath = `./src/${projectName}/`;
   const buildFolderName = projectPath + "lib/";
 
   const listFiles = (path: string, type?: string | string[]) => {
@@ -60,7 +55,7 @@ const buildProject = async (projectName: string) => {
 
   const tsCompile = async () => {
     let tsconfig = fs.readFileSync("./tsconfig.json", "utf-8");
-    tsconfig = tsconfig.replace("./core/", "../core/");
+    tsconfig = tsconfig.replace("./src/core/", "../core/");
     fs.writeFileSync(projectPath + "tsconfig.json", tsconfig);
 
     try {
@@ -90,7 +85,7 @@ const buildProject = async (projectName: string) => {
       fs.rmSync(projectPath + "tsconfig.json");
       if (error && typeof error === "object" && "stdout" in error) {
         const { stdout } = error;
-        console.error("The following tsc error ocurred in", projectPath)
+        console.error("The following tsc error ocurred in", projectPath);
         abort(typeof stdout === "string" ? stdout : String(stdout));
       } else throw error;
     }
@@ -124,7 +119,7 @@ const buildProject = async (projectName: string) => {
 };
 
 const publishProject = async (projectName: string) => {
-  const projectPath = `./${projectName}/`;
+  const projectPath = `./src/${projectName}/`;
   const getTotp = () => {
     const secret = process.env.OTP_KEY_HEX;
     if (!secret) throw new Error("Missing env-var 'OTP_KEY_HEX'");
@@ -171,7 +166,7 @@ const executers = {
     fs.writeFileSync("./package.json", JSON.stringify(indexJs, null, 2));
 
     const updateVersion = (module: string) => {
-      const path = `./${module}/package.json`;
+      const path = `./src/${module}/package.json`;
       const pckg = JSON.parse(fs.readFileSync(path, "utf-8"));
       pckg.version = versionStr;
       fs.writeFileSync(path, JSON.stringify(pckg, null, 2));
@@ -183,7 +178,7 @@ const executers = {
       throw abort("Unexpected argument count, expected only 0 or 1");
     const project = args[1];
     if (project) {
-      if (!fs.existsSync("./" + project))
+      if (!fs.existsSync("./src/" + project))
         throw abort(`Cannot build project ${project} as it doesn't exist`);
       await buildProject(project);
     } else await Promise.all(getModuleNames().map(buildProject));

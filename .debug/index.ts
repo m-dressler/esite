@@ -27,9 +27,9 @@ const loadModule = async (module: string) => {
   await exec("npm run build " + module, { cwd: "." });
 
   await fs.mkdir(moduleFolder, { recursive: true });
-  const copy = fs.cp(`./${module}/`, moduleFolder, { recursive: true });
+  const copy = fs.cp(`./src/${module}/`, moduleFolder, { recursive: true });
 
-  const packageStr = await fs.readFile(`./${module}/package.json`, "utf-8");
+  const packageStr = await fs.readFile(`./src/${module}/package.json`, "utf-8");
   const pckg = JSON.parse(packageStr);
   packageJson.dependencies["@esite/" + module] = pckg.version;
   await copy;
@@ -69,20 +69,18 @@ const rebuild = (module: string) => {
   const clearModules = fs
     .rm("./.debug/node_modules", { recursive: true })
     .catch(() => {});
-  const dirs = await fs.readdir(".", { encoding: "utf-8" });
+  const dirs = await fs.readdir("./src", { encoding: "utf-8" });
   await clearModules;
 
   const modulePromises = [] as Promise<any>[];
   for (let i = 0; i < dirs.length; ++i) {
     const dir = dirs[i];
-    // Filter any files (with .), starter
-    if (dir.includes(".") || dir === "create") continue;
-    // Filter out unimplemented modules
-    if (!(await exists(`./${dir}/src/`))) continue;
+    // Filter out starter & unimplemented modules
+    if (dir === "create" || !(await exists(`./src/${dir}/src/`))) continue;
     console.log("Building module", dir);
     modulePromises.push(loadModule(dir));
     fsSync
-      .watch("./" + dir + "/src", { recursive: true })
+      .watch("./src/" + dir + "/src", { recursive: true })
       .addListener("change", () => rebuild(dir));
   }
   await Promise.all(modulePromises);
