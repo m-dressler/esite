@@ -1,10 +1,12 @@
 #!/usr/bin/env node
-import type { AwsRegion, Domain } from "./aws.js";
 import readline from "readline";
-import psl from "psl";
-import { AWS_REGIONS, createAwsInfrastructure } from "./aws.js";
-import { createProject } from "./createProject.js";
-import type { AwsCredentialIdentity } from "@aws-sdk/types/dist-types/identity";
+import fs from "fs/promises";
+import { fileURLToPath } from "url";
+import path from "path";
+import { exec as execCb } from "child_process";
+import { promisify } from "util";
+
+const exec = promisify(execCb);
 
 export const abort = (reason?: "error") => {
   let message = "Aborting";
@@ -13,80 +15,95 @@ export const abort = (reason?: "error") => {
   process.exit(0);
 };
 
+const currentDir = path.dirname(fileURLToPath(import.meta.url));
+const defaults = {
+  "epage.yaml": `SourcePath: "./src/"
+BuildPath: "./build/"
+RemoveHtmlExtension: true
+PreviewPort: 8080
+
+BucketName: <MY_BUCKET>
+BucketRegion: <AWS_BUCKET_REGION>
+CloudfrontId: <CLOUDFRONT_ID>
+`,
+  "package.json": {
+    name: "placeholder",
+    version: "0.0.1",
+    description: "Your newly created esite project",
+    scripts: {
+      preview: "esite-preview",
+      publish: "esite-core",
+    },
+    dependencies: {
+      "@esite/core": "0.0.0",
+      "@esite/preview": "0.0.0",
+      "@esite/minify": "0.0.0",
+      "@esite/deploy-s3": "0.0.0",
+    },
+  },
+  "src/index.html": "<h1>Hello World</h1>",
+  "src/error.html": "<h1>Oh no, an error occurred</h1>",
+};
+
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
 });
-export const prompt = (query: string, lowerTrim: boolean): Promise<string> =>
-  new Promise((resolve: (res: string) => void) =>
-    rl.question(query, (res: string) =>
-      resolve(lowerTrim ? res.trim().toLowerCase() : res)
-    )
+
+export const prompt = (query: string) =>
+  new Promise<string>((resolve) => rl.question(query + "\n> ", resolve));
+
+const projectNamePromise = prompt("Project Name");
+const versionPromise = fs
+  .readFile(path.resolve(currentDir, "../package.json"), "utf-8")
+  .then((res) => JSON.parse(res).version as string);
+const projectName = await projectNamePromise;
+
+const projectFolder = "./" + projectName;
+console.log("Setting up project", projectName, "in folder", projectFolder);
+await fs.mkdir(projectFolder + "/src", { recursive: true });
+
+const packageJson = defaults["package.json"];
+packageJson.name = projectName;
+for (const dependency in packageJson.dependencies) {
+  packageJson.dependencies[
+    dependency as keyof typeof packageJson.dependencies
+  ] = await versionPromise;
+}
+
+const fsOperations = Object.entries(defaults).map(([path, value]) => {
+  const string = typeof value === "string" ? value : JSON.stringify(value);
+  fs.writeFile(projectFolder + "/" + path, string);
+});
+await Promise.all(fsOperations);
+
+console.log("\nProject created successfully");
+const install = await prompt("Do you want to install the dependencies? (y/n)");
+if (["y", "ye", "yes", "yup"].includes(install.toLowerCase())) {
+  const hasPnpm = await exec("pnpm --version").then(
+    () => true,
+    () => false
   );
-
-const startPrompting = async () => {
-  let region: undefined | AwsRegion;
-  let website: import("psl").ParsedDomain = {
-    tld: null,
-    sld: null,
-    domain: null,
-    subdomain: null,
-    listed: false,
-    input: "",
-    error: undefined,
-  };
-  let subpath: string | undefined;
-  let awsAccessKeyId: string | undefined;
-  let awsSecretAccessKey: string | undefined;
-  let awsSessionToken: string | undefined;
-  while (!region) {
-    const input =
-      (await prompt("AWS Region [eu-west-1]: ", true)) || "eu-west-1";
-    if (AWS_REGIONS.indexOf(input as AwsRegion) !== -1)
-      region = input as AwsRegion;
+  if (hasPnpm) {
+    console.log("Installing with pnpm");
+    await exec("pnpm i", { cwd: projectFolder });
+  } else {
+    console.log("Installing with npm");
+    await exec("npm i", { cwd: projectFolder });
   }
-  while (!(website.domain && website.subdomain && website.tld)) {
-    let input = await prompt("Website name (e.g. hello.mysite.com): ", true);
-    const res = psl.parse(input);
-    if (!res.error) website = res;
-  }
-  while (subpath === undefined)
-    awsAccessKeyId = (await prompt("Folder [NONE]: ", true)) || "";
-  while (!awsAccessKeyId)
-    awsAccessKeyId = await prompt("AWS Access Key ID: ", true);
-  while (!awsSecretAccessKey)
-    awsSecretAccessKey = await prompt("AWS Secret Access Key: ", true);
-  while (awsSessionToken === undefined)
-    awsSessionToken = (await prompt("AWS Session Token [NONE]: ", true)) || "";
-  if (awsSessionToken === "") awsSessionToken = undefined;
-
-  const awsCredentials: AwsCredentialIdentity = {
-    accessKeyId: awsAccessKeyId,
-    secretAccessKey: awsSecretAccessKey,
-    ...(awsSessionToken && { sessionToken: awsSessionToken }),
-  };
-
-  const domain: Domain = {
-    fqdn: website.input,
-    subdomain: website.subdomain,
-    baseDomain: website.domain,
-    tld: website.tld,
-  };
-  const awsResult = await createAwsInfrastructure(
-    domain,
-    region,
-    awsCredentials
+} else {
+  console.log(
+    "Skipping install — install dependencies manually by running `npm i` inside the project folder"
   );
+}
 
-  const config = Object.assign(awsResult, { subpath });
-  await createProject(website.domain, config, awsCredentials);
+console.log("\n\nYour project", projectName, "is all set up!");
+console.log();
+console.log("Run `npm run preview` to start a development server locally");
+console.log("And `npm run publish` to upload your project to the cloud");
+console.log();
+console.log(
+  "Make sure you configure `esite.yaml` and `.env` correctly for your project"
+);
 
-  console.log("Successfully created website");
-
-  rl.close();
-};
-
-startPrompting()
-  .catch((e) => console.error("Unable to prompt", e))
-  .then(rl.close);
-rl.on("close", () => process.exit(0));
+process.exit(0);

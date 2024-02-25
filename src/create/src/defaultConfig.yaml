@@ -1,4 +1,0 @@
-BucketPath: "{{SUBPATH}}"
-BucketName: "{{BUCKET_NAME}}"
-CloudfrontID: "{{CLOUDFRONT_ID}}"
-SourcePath: "./src/"
