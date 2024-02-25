@@ -35,30 +35,16 @@ else {
 
   console.log("Build successful");
 
-  if (Config.Deploy === "NONE")
-    console.log("Skipping deploy as none specified");
+  const deployModules = Config.Modules.filter((name) =>
+    name.startsWith("deploy-")
+  );
+  if (deployModules.length === 0)
+    console.log("Skipping deploy as no deploy modules installed");
   else {
-    const deployModule = "@esite/deploy-" + Config.Deploy;
-    const deployer = await import(deployModule).catch(() => {
-      console.error(
-        `Deploy setting in esite.yaml. ${deployModule} not installed`
-      );
-      process.exit(-1);
-    });
-    if (!(deployer && "deploy" in deployer)) {
-      console.error(
-        `Invalid Deploy module ${deployModule} has no export "deploy"`
-      );
-      process.exit(-1);
-    }
-
-    const deploy = deployer.deploy as DeployFunction;
-
     const directoryFiles = await fs.readdir(Config.BuildPath, {
       recursive: true,
       encoding: "utf-8",
     });
-
     const toFilteredFullPaths = async (dirPath: string) => {
       if (dirPath.endsWith("/.DS_Store")) return [];
       const path = Config.BuildPath + dirPath;
@@ -67,6 +53,25 @@ else {
       return [path];
     };
     const files = await Promise.all(directoryFiles.map(toFilteredFullPaths));
-    deploy(files.flat(), { Config });
+
+    for (const module of deployModules) {
+      const deployModule = "@esite/" + module;
+      const deployer = await import(deployModule).catch(() => {
+        console.error(
+          `Deploy setting in esite.yaml. ${deployModule} not installed`
+        );
+        process.exit(-1);
+      });
+      if (!(deployer && "deploy" in deployer)) {
+        console.error(
+          `Invalid Deploy module ${deployModule} has no export "deploy"`
+        );
+        process.exit(-1);
+      }
+
+      const deploy = deployer.deploy as DeployFunction;
+      console.log("Deploying to", module.replace("deploy-", ""));
+      await deploy(files.flat(), { Config });
+    }
   }
 }

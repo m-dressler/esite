@@ -49,17 +49,12 @@ Note that additional modules may specify additional configuration they need in t
   - Type: boolean
   - Optional: true
   - Default: true
-- Deploy: 
-  - Description: The @esite deployment module to use for deployment (e.g. "s3") [learn more](#deploying)
-  - Type: string
-  - Optional: true
-  - Default: None
 
 ## Deploying
 
-One of the main advantages of using @esite, is that it can help you go straight from build to deploy with included deployment modules. Here are the currently supported platforms you can deploy to:
+One of the main advantages of using @esite, is that it can help you go straight from build to deploy with included deployment modules. Simply install one of the deployment modules from the list below:
 
-- AWS S3: set `Deploy` to `s3` and install [@esite/deploy-s3](https://npmjs.com/package/@esite/deploy-s3)
+- AWS S3 | [@esite/deploy-s3](https://npmjs.com/package/@esite/deploy-s3)
 
 ## Plugins
 

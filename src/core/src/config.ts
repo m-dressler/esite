@@ -40,11 +40,6 @@ const configValidator = {
     optional: false,
     type: "string[]",
   },
-  Deploy: {
-    optional: true,
-    type: "string",
-    default: "NONE",
-  },
 } as const satisfies Configuration;
 
 const logError = (...args: [any, ...any[]]) =>
