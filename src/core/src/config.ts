@@ -81,30 +81,30 @@ const loadOtherModules = async (modules: string[]) => {
 };
 
 const loadConfigFile = async (): Promise<{ [key: string]: string }> => {
-  try {
-    const configString = await fs.readFile(configFile, {
+  const configString = await fs
+    .readFile(configFile, {
       encoding: "utf-8",
+    })
+    .catch(() => {
+      throw terminate("Could not read " + configFile);
     });
-    const config = yaml.parse(configString);
-    if (!(config && typeof config === "object"))
-      terminate(`${configFile} must be a valid key-value object`);
-    const execModule = process.env.ESITE_EXEC_MODULE;
-    const deployModuleName = config.Deploy;
-    if (execModule) {
-      if (!config.Modules) config.Modules = [execModule];
-      else if (Array.isArray(config.Modules)) config.Modules.push(execModule);
-    }
-    if (deployModuleName) {
-      const deployModule = "deploy-" + deployModuleName;
-      if (!config.Modules) config.Modules = [deployModule];
-      else if (Array.isArray(config.Modules)) config.Modules.push(deployModule);
-    }
-    if (config.Modules && Array.isArray(config.Modules))
-      await loadOtherModules(config.Modules);
-    return config;
-  } catch (error) {
-    throw terminate("Could not read " + configFile);
+  const config = yaml.parse(configString);
+  if (!(config && typeof config === "object"))
+    terminate(`${configFile} must be a valid key-value object`);
+  const execModule = process.env.ESITE_EXEC_MODULE;
+  const deployModuleName = config.Deploy;
+  if (execModule) {
+    if (!config.Modules) config.Modules = [execModule];
+    else if (Array.isArray(config.Modules)) config.Modules.push(execModule);
   }
+  if (deployModuleName) {
+    const deployModule = "deploy-" + deployModuleName;
+    if (!config.Modules) config.Modules = [deployModule];
+    else if (Array.isArray(config.Modules)) config.Modules.push(deployModule);
+  }
+  if (config.Modules && Array.isArray(config.Modules))
+    await loadOtherModules(config.Modules);
+  return config;
 };
 
 const isOfType = <T extends Types>(value: unknown, type: T): value is any => {
