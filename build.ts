@@ -164,14 +164,17 @@ const executers = {
     const versionStr = version.join(".");
     indexJs.version = versionStr;
     fs.writeFileSync("./package.json", JSON.stringify(indexJs, null, 2));
+    await exec("git add ./package.json");
 
-    const updateVersion = (module: string) => {
+    for (const module of getModuleNames()) {
       const path = `./src/${module}/package.json`;
       const pckg = JSON.parse(fs.readFileSync(path, "utf-8"));
       pckg.version = versionStr;
       fs.writeFileSync(path, JSON.stringify(pckg, null, 2));
-    };
-    getModuleNames().forEach(updateVersion);
+      await exec("git add " + path);
+    }
+    await exec(`git commit -m ` + versionStr);
+    await exec("git tag v" + versionStr);
   },
   build: async () => {
     if (args.length > 2)
