@@ -44,6 +44,12 @@ export type RunFunction<T extends Configuration = {}> = (params: {
   Config: typeof Config & ConfigValue<T>;
   build: typeof build;
 }) => any;
+export type DeployFunction<T extends Configuration = {}> = (
+  files: string[],
+  params: {
+    Config: typeof Config & ConfigValue<T>;
+  }
+) => any;
 
 const configFile = "esite.yaml";
 
@@ -59,35 +65,6 @@ const validateLocalPath = (str: string) => {
 };
 
 const configValidator = {
-  BucketName: {
-    optional: false,
-  },
-  BucketRegion: {
-    optional: false,
-  },
-  CloudfrontId: {
-    optional: true,
-    default: "__NONE__",
-    parser: (str) => {
-      if (str !== "__NONE__") return str;
-      // Warns about using S3 w/o cloudfront
-      console.warn(
-        "It's highly recommended to use a CloudFront distribution to serve your website"
-      );
-      return "";
-    },
-  },
-  BucketPath: {
-    optional: true,
-    default: "",
-    parser: (str: string) => {
-      // Guarantees doesn't start with a slash
-      while (str.startsWith("/")) str = str.substring(1);
-      // Guarantees ends with a slash if not empty
-      if (str !== "" && !str.endsWith("/")) str += "/";
-      return str;
-    },
-  },
   SourcePath: {
     optional: true,
     default: "./src",
@@ -108,6 +85,11 @@ const configValidator = {
     type: "string[]",
     default: [] as string[],
   },
+  Deploy: {
+    optional: true,
+    type: "string",
+    default: "NONE",
+  },
 } as const satisfies Configuration;
 
 const logError = (...args: [any, ...any[]]) =>
@@ -115,19 +97,6 @@ const logError = (...args: [any, ...any[]]) =>
 const terminate = (message?: string) => {
   if (message) logError(message);
   process.exit(1);
-};
-
-const getAwsCredentials = () => {
-  const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = process.env;
-
-  if (!(AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY))
-    throw terminate(
-      "Missing environment variables AWS_ACCESS_KEY_ID and/or AWS_SECRET_ACCESS_KEY"
-    );
-  return {
-    accessKeyId: AWS_ACCESS_KEY_ID,
-    secretAccessKey: AWS_SECRET_ACCESS_KEY,
-  } as const;
 };
 
 const loadOtherModules = async (modules: string[]) => {
@@ -166,9 +135,15 @@ const loadConfigFile = async (): Promise<{ [key: string]: string }> => {
     if (!(config && typeof config === "object"))
       terminate(`${configFile} must be a valid key-value object`);
     const execModule = process.env.ESITE_EXEC_MODULE;
+    const deployModuleName = config.Deploy;
     if (execModule) {
       if (!config.Modules) config.Modules = [execModule];
       else if (Array.isArray(config.Modules)) config.Modules.push(execModule);
+    }
+    if (deployModuleName) {
+      const deployModule = "deploy-" + deployModuleName;
+      if (!config.Modules) config.Modules = [deployModule];
+      else if (Array.isArray(config.Modules)) config.Modules.push(deployModule);
     }
     if (config.Modules && Array.isArray(config.Modules))
       await loadOtherModules(config.Modules);
@@ -253,8 +228,5 @@ const validateConfig = (unsafeConfig: {
   return config as ConfigValue<typeof configValidator>;
 };
 
-const AwsCredentials = getAwsCredentials();
 const unsafeConfig = await loadConfigFile();
-const configFileContent = validateConfig(unsafeConfig);
-
-export const Config = { AwsCredentials, ...configFileContent } as const;
+export const Config = validateConfig(unsafeConfig);

@@ -1,14 +1,10 @@
 #!/usr/bin/env node
-import "dotenv/config";
-import "./utilities.js";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import mime from "mime";
-import fs from "fs";
-import { CloudFront } from "@aws-sdk/client-cloudfront";
+import fs from "fs/promises";
 import { Config, RunFunction, BuildConfig } from "./config.js";
 import { build } from "./build.js";
 import type { Configuration } from "./config.js";
-export { Config, Configuration, RunFunction, BuildConfig };
+import { DeployFunction } from "./config.js";
+export type { Config, Configuration, RunFunction, BuildConfig };
 
 // If a esite module set this env var we execute it, not the standard logic
 if (process.env.ESITE_EXEC_MODULE) {
@@ -39,79 +35,41 @@ else {
     else console.error(err);
     process.exit(-1);
   }
-  const s3Client = new S3Client({
-    region: Config.BucketRegion,
-    credentials: Config.AwsCredentials,
-  });
 
-  const uploadFile = async (file: string) => {
-    const contentType = mime.getType(file) || "application/octet-stream";
-    const stream = fs.createReadStream(file);
-    let key = file.replace(Config.BuildPath, Config.BucketPath);
-    if (Config.RemoveHtmlExtension) key = key.replace(/\.html$/, "");
-    return s3Client.send(
-      new PutObjectCommand({
-        Key: key,
-        ContentType: contentType,
-        Body: stream,
-        Bucket: Config.BucketName,
-      })
-    );
-  };
+  console.log("Build successful");
 
-  const pathFilter = (() => {
-    const index = process.argv.indexOf("--path");
-    if (index === -1) return undefined;
-    else return process.argv[index + 1]?.split(",");
-  })();
-  const filterFiles = (path: string): boolean => {
-    if (path.endsWith("/.DS_Store")) return false;
-    if (pathFilter && !pathFilter.includes(path)) return false;
-    return true;
-  };
-
-  const uploadDir = async (dir: string) => {
-    const files = fs
-      .readdirSync(dir, { recursive: true, encoding: "utf-8" })
-      // Ignore non-content files
-      .filter(filterFiles);
-    const promises: Promise<any>[] = [];
-    const trace = process.argv.includes("--trace");
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (trace) console.log("Uploading", file);
-      const promise = fs.promises.stat(dir + file).then(async (res) => {
-        if (!res.isDirectory()) await uploadFile(dir + file);
-      });
-      promises.push(promise);
-    }
-    const result = await Promise.allSettled(promises);
-    for (let i = 0; i < result.length; i++) {
-      const element = result[i];
-      if (element.status === "rejected")
-        console.error("Couldn't upload element:", element.reason);
-    }
-    return result;
-  };
-
-  const invalidateCache = async () => {
-    const cloudfront = new CloudFront({
-      credentials: Config.AwsCredentials,
-      region: Config.BucketRegion,
+  if (Config.Deploy === "NONE")
+    console.log("Skipping deploy as none specified");
+  else {
+    const deployModule = "@esite/deploy-" + Config.Deploy;
+    const deployer = await import(deployModule).catch(() => {
+      console.error(
+        `Deploy setting in esite.yaml. ${deployModule} not installed`
+      );
+      process.exit(-1);
     });
-    await cloudfront.createInvalidation({
-      DistributionId: Config.CloudfrontId,
-      InvalidationBatch: {
-        CallerReference: Date.now().toString(),
-        Paths: {
-          Quantity: 1,
-          Items: ["/" + Config.BucketPath + "*"],
-        },
-      },
-    });
-  };
+    if (!(deployer && "deploy" in deployer)) {
+      console.error(
+        `Invalid Deploy module ${deployModule} has no export "deploy"`
+      );
+      process.exit(-1);
+    }
 
-  uploadDir(Config.BuildPath)
-    .then(async () => (Config.CloudfrontId ? invalidateCache() : 0))
-    .then(() => console.log("Uploaded"));
+    const deploy = deployer.deploy as DeployFunction;
+
+    const directoryFiles = await fs.readdir(Config.BuildPath, {
+      recursive: true,
+      encoding: "utf-8",
+    });
+
+    const toFilteredFullPaths = async (dirPath: string) => {
+      if (dirPath.endsWith("/.DS_Store")) return [];
+      const path = Config.BuildPath + dirPath;
+      const { isDirectory } = await fs.stat(path);
+      if (isDirectory()) return [];
+      return [path];
+    };
+    const files = await Promise.all(directoryFiles.map(toFilteredFullPaths));
+    deploy(files.flat(), { Config });
+  }
 }

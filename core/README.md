@@ -5,9 +5,13 @@ esite is a suite of tools to help you set up your website the easy way on your c
 ## Overview
 
 # Table of Contents
-1. [How to use](#how-to-use)
-2. [Cloud Adapters](#cloud-adapters)
-3. [Plugins](#plugins)
+- [Overview](#overview)
+- [How to use](#how-to-use)
+  - [Starter Project](#starter-project)
+  - [Manual Setup](#manual-setup)
+- [Configuration](#configuration)
+- [Deploying](#deploying)
+- [Plugins](#plugins)
 
 ## How to use
 
@@ -24,16 +28,43 @@ pnpm create esite@latest
 
 ### Manual Setup
 
-Install `@esite/core`
+Install `@esite/core` and create a file `esite.yaml` at the root of your project which will contain your configuration (see [Configuration](#configuration))
 
-### Configuring your project
+## Configuration
 
-You'll need two things to get started:
-1. a `esite.yaml` file which contains your configuration with, at minimum:
-    1.   `BucketName` - the name of the bucket in you AWS account
-    2.   `BucketRegion` - the AWS region the bucket's in
-2. add `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to your environment variables
-   1.  easiest via a `.env` file at the project root
+Note that additional modules added via the `Modules` configuration specify additional configuration they need in the `README.md` file.
+
+- SourcePath
+  - Description: The folder which contains your code
+  - Type: string
+  - Optional: true
+  - Default: "./src"
+- BuildPath
+  - Description: The folder where @esite builds the project in
+  - Type: string
+  - Optional: true
+  - Default: "./build"
+- RemoveHtmlExtension
+  - Description: Used for deploying the application only | Strips the `.html` extension form your HTML files
+  - Type: boolean
+  - Optional: true
+  - Default: true
+- Modules: 
+  - Description: Additional @esite modules that you want to load (e.g. ["minify", "typescript"])
+  - Type: string[]
+  - Optional: true
+  - Default: []
+- Deploy: 
+  - Description: The @esite deployment module to use for deployment (e.g. "s3") [learn more](#deploying)
+  - Type: string
+  - Optional: true
+  - Default: None
+
+## Deploying
+
+One of the main advantages of using @esite, is that it can help you go straight from build to deploy with included deployment modules. Here are the currently supported platforms you can deploy to:
+
+- AWS S3: set `Deploy` to `s3` and install [@esite/deploy-s3](https://npmjs.com/package/@esite/deploy-s3)
 
 ## Plugins
 

@@ -38,8 +38,14 @@ const runBuildSteps = async (
   else if (failed.length > 0) throw failed.map((f) => f.reason);
 };
 
+const exists = async (path: string) =>
+  fs.access(path, fs.constants.F_OK).then(
+    () => true,
+    () => false
+  );
+
 export const build = async (type: "dev" | "prod") => {
-  if (!(await fs.exists(Config.BuildPath)))
+  if (!(await exists(Config.BuildPath)))
     await fs.mkdir(Config.BuildPath, { recursive: true });
   // Clear build directory
   const files = await fs.readdir(Config.BuildPath);

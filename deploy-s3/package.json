@@ -1,0 +1,22 @@
+{
+  "name": "@esite/deploy-s3",
+  "version": "0.5.2",
+  "description": "",
+  "main": "lib/index.js",
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-cloudfront": "^3.521.0",
+    "@aws-sdk/client-s3": "^3.521.0",
+    "dotenv": "^16.0.3",
+    "mime": "^3.0.0"
+  },
+  "files": [
+    "lib/**/*"
+  ],
+  "devDependencies": {
+    "@types/mime": "^3.0.1"
+  }
+}
