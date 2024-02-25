@@ -6,10 +6,9 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node --esm build.ts",
-    "build": "npm run dev -- --build",
-    "publish": "npm run dev -- --publish",
-    "version": "npm run dev -- --version",
+    "build": "ts-node --esm build.ts build",
+    "publish": "ts-node --esm build.ts publish",
+    "version": "ts-node --esm build.ts version",
     "debug": "ts-node --esm ./.debug/index.ts"
   },
   "keywords": [],
@@ -17,13 +16,13 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.0.3",
-    "@types/inquirer": "^9.0.6",
-    "@types/node": "^20.8.9",
-    "inquirer": "^9.2.11",
     "terser": "^5.24.0",
     "typescript": "^5.2.2"
   },
   "files": [
     "lib/**/*"
-  ]
+  ],
+  "devDependencies": {
+    "@types/node": "^20.8.9"
+  }
 }

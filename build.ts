@@ -1,6 +1,5 @@
 import * as child_process from "child_process";
 import fs, { readdirSync } from "fs";
-import inquirer from "inquirer";
 import { minify } from "terser";
 import { promisify } from "util";
 import "dotenv/config";
@@ -9,8 +8,6 @@ import crypto from "crypto";
 const exec = promisify(child_process.exec);
 
 const args = process.argv.slice(2);
-const projectIndex = args.indexOf("--project");
-let project = projectIndex === -1 ? void 0 : args[projectIndex + 1];
 
 const getModuleNames = () => {
   const files = fs.readdirSync(".");
@@ -21,59 +18,6 @@ const getModuleNames = () => {
       fs.existsSync("./" + f + "/package.json")
   );
 };
-
-if (args.includes("--version")) {
-  const versions = ["major", "minor", "patch"] as const;
-  let versionChange = args[
-    args.indexOf("--version") + 1
-  ] as (typeof versions)[number];
-  if (!versions.includes(versionChange))
-    versionChange = await inquirer
-      .prompt({
-        type: "list",
-        name: "version",
-        message: "Select a version:",
-        choices: [...versions].reverse(),
-      })
-      .then((res) => res.version);
-  const indexJs = JSON.parse(fs.readFileSync("./package.json", "utf-8"));
-  const version = indexJs.version.split(".").map(Number) as number[];
-  const versionIndex = versions.indexOf(versionChange);
-  version[versionIndex]++;
-  for (let i = versionIndex + 1; i < version.length; ++i) version[i] = 0;
-  const versionStr = version.join(".");
-  indexJs.version = versionStr;
-  fs.writeFileSync("./package.json", JSON.stringify(indexJs, null, 2));
-
-  const updateVersion = (module: string) => {
-    const path = `./${module}/package.json`;
-    const pckg = JSON.parse(fs.readFileSync(path, "utf-8"));
-    pckg.version = versionStr;
-    fs.writeFileSync(path, JSON.stringify(pckg, null, 2));
-  };
-  getModuleNames().forEach(updateVersion);
-
-  process.exit(0);
-}
-
-if (!project) {
-  console.log("Select project:");
-  const modules = getModuleNames();
-  const result = (await inquirer.prompt({
-    type: "list",
-    name: "project",
-    message: "Select a project to build:",
-    choices: ["all", ...modules],
-  })) as { project: (typeof modules)[number] };
-  project = result.project;
-}
-
-if (!(args.includes("--build") || args.includes("--publish"))) {
-  console.error(
-    "No action defined, did you forget adding '--build' or '--publish'?"
-  );
-  process.exit(1);
-}
 
 const buildProject = async (projectName: string) => {
   const projectPath = `./${projectName}/`;
@@ -197,11 +141,70 @@ const publishProject = async (projectName: string) => {
   console.log(stdout, stderr);
 };
 
-if (project === "all") await Promise.all(getModuleNames().map(buildProject));
-else await buildProject(project);
+const executers = {
+  version: async () => {
+    if (args.length !== 2) {
+      console.error("Unexpected argument count, expected only 1");
+      process.exit(1);
+    }
+    const versions = ["major", "minor", "patch"] as const;
+    const versionChange = args[1] as (typeof versions)[number];
+    if (!versions.includes(versionChange)) {
+      console.error("Invalid version provided, use one of", versions);
+      process.exit(1);
+    }
+    const indexJs = JSON.parse(fs.readFileSync("./package.json", "utf-8"));
+    const version = indexJs.version.split(".").map(Number) as number[];
+    const versionIndex = versions.indexOf(versionChange);
+    version[versionIndex]++;
+    for (let i = versionIndex + 1; i < version.length; ++i) version[i] = 0;
+    const versionStr = version.join(".");
+    indexJs.version = versionStr;
+    fs.writeFileSync("./package.json", JSON.stringify(indexJs, null, 2));
 
-if (args.includes("--publish")) {
-  if (project === "all")
+    const updateVersion = (module: string) => {
+      const path = `./${module}/package.json`;
+      const pckg = JSON.parse(fs.readFileSync(path, "utf-8"));
+      pckg.version = versionStr;
+      fs.writeFileSync(path, JSON.stringify(pckg, null, 2));
+    };
+    getModuleNames().forEach(updateVersion);
+  },
+  build: async () => {
+    if (args.length > 2) {
+      console.error("Unexpected argument count, expected only 0 or 1");
+      process.exit(1);
+    }
+    const project = args[1];
+    if (project) {
+      if (!fs.existsSync("./" + project)) {
+        console.error(`Cannot build project ${project} as it doesn't exist`);
+        process.exit(1);
+      }
+      await buildProject(project);
+    } else await Promise.all(getModuleNames().map(buildProject));
+  },
+  publish: async () => {
+    await executers.build();
     await Promise.all(getModuleNames().map(publishProject));
-  else await publishProject(project);
+  },
+  help: () =>
+    console.log(
+      "Use either of ",
+      Object.keys(executers).filter((k) => k !== "help")
+    ),
+};
+
+const command = args[0];
+const executer = executers[command as keyof typeof executers];
+if (!executer) {
+  const error = command
+    ? `Command "${command}" does not exist`
+    : "Missing a command";
+  console.error(`${error}. For further detail run with command "help"`);
+  process.exit(1);
 }
+
+Promise.resolve(executer()).catch((e: any) => {
+  console.error("Unexpected exception", e);
+});
