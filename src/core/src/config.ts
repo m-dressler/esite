@@ -2,8 +2,6 @@ import fs from "fs/promises";
 import yaml from "yaml";
 import { addBuildSteps } from "./build.js";
 import { Types } from "./types.js";
-import path from "path";
-import { fileURLToPath } from "url";
 
 export type CoreConfigValidator = typeof configValidator;
 
@@ -50,11 +48,7 @@ const terminate = (message?: string) => {
 };
 
 const loadOtherModules = async () => {
-  const dependencyPath = path.resolve(
-    fileURLToPath(import.meta.url),
-    "../../.."
-  );
-  let moduleNames = await fs.readdir(dependencyPath);
+  let moduleNames = await fs.readdir("./node_modules/@esite/");
   moduleNames = moduleNames.filter(
     (name) => !name.startsWith(".") && name !== "core"
   );
