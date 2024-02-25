@@ -20,7 +20,7 @@ const packageJson = {
 };
 
 const loadModule = async (module: string) => {
-  const moduleFolder = "./.debug/node_modules/@esite/" + module + "/";
+  const moduleFolder = "./test/node_modules/@esite/" + module + "/";
   // TS Build
   if (await exists(moduleFolder))
     await fs.rm(moduleFolder, { recursive: true });
@@ -39,8 +39,8 @@ let currentProcess: ChildProcess | null = null;
 
 const startProcess = async () => {
   const binary = `./node_modules/@esite/${runModule}/lib/index.js`;
-  await exec("chmod +x " + binary, { cwd: "./.debug" });
-  currentProcess = spawn(binary, { cwd: "./.debug", stdio: "inherit" });
+  await exec("chmod +x " + binary, { cwd: "./test" });
+  currentProcess = spawn(binary, { cwd: "./test", stdio: "inherit" });
   await new Promise((res) => currentProcess?.on("exit", res));
 };
 
@@ -67,7 +67,7 @@ const rebuild = (module: string) => {
 
 (async () => {
   const clearModules = fs
-    .rm("./.debug/node_modules", { recursive: true })
+    .rm("./test/node_modules", { recursive: true })
     .catch(() => {});
   const dirs = await fs.readdir("./src", { encoding: "utf-8" });
   await clearModules;
@@ -86,7 +86,7 @@ const rebuild = (module: string) => {
   await Promise.all(modulePromises);
 
   // await fs.writeFile(
-  //   "./.debug/package.json",
+  //   "./test/package.json",
   //   JSON.stringify(packageJson, null, 2)
   // );
   await startProcess();
