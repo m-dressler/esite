@@ -2,6 +2,8 @@ import fs from "fs/promises";
 import yaml from "yaml";
 import { addBuildSteps } from "./build.js";
 import { Types } from "./types.js";
+import path from "path";
+import { fileURLToPath } from "url";
 
 export type CoreConfigValidator = typeof configValidator;
 
@@ -35,9 +37,8 @@ const configValidator = {
     default: true,
   },
   Modules: {
-    optional: true,
+    optional: false,
     type: "string[]",
-    default: [] as string[],
   },
   Deploy: {
     optional: true,
@@ -53,13 +54,21 @@ const terminate = (message?: string) => {
   process.exit(1);
 };
 
-const loadOtherModules = async (modules: string[]) => {
+const loadOtherModules = async () => {
+  const dependencyPath = path.resolve(
+    fileURLToPath(import.meta.url),
+    "../../.."
+  );
+  let moduleNames = await fs.readdir(dependencyPath);
+  moduleNames = moduleNames.filter(
+    (name) => !name.startsWith(".") && name !== "core"
+  );
   let hadErrors = false;
   /** The build steps loaded from @esite/* modules */
   const loadedBuildSteps: BuildConfig[] = [];
 
-  for (let i = 0; i < modules.length; ++i) {
-    const moduleName = modules[i];
+  for (let i = 0; i < moduleNames.length; ++i) {
+    const moduleName = moduleNames[i];
     const module = await import("@esite/" + moduleName).catch(() => {
       logError(`Couldn't load module @esite/${moduleName} not installed`);
       hadErrors = true;
@@ -78,6 +87,8 @@ const loadOtherModules = async (modules: string[]) => {
 
   addBuildSteps(...loadedBuildSteps);
   if (hadErrors) terminate();
+
+  return moduleNames;
 };
 
 const loadConfigFile = async (): Promise<{ [key: string]: string }> => {
@@ -91,19 +102,8 @@ const loadConfigFile = async (): Promise<{ [key: string]: string }> => {
   const config = yaml.parse(configString);
   if (!(config && typeof config === "object"))
     terminate(`${configFile} must be a valid key-value object`);
-  const execModule = process.env.ESITE_EXEC_MODULE;
-  const deployModuleName = config.Deploy;
-  if (execModule) {
-    if (!config.Modules) config.Modules = [execModule];
-    else if (Array.isArray(config.Modules)) config.Modules.push(execModule);
-  }
-  if (deployModuleName) {
-    const deployModule = "deploy-" + deployModuleName;
-    if (!config.Modules) config.Modules = [deployModule];
-    else if (Array.isArray(config.Modules)) config.Modules.push(deployModule);
-  }
-  if (config.Modules && Array.isArray(config.Modules))
-    await loadOtherModules(config.Modules);
+
+  config.Modules = await loadOtherModules();
   return config;
 };
 

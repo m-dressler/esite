@@ -4,7 +4,7 @@ Optimizes esite projects by minifying HTML, JavaScript, and CSS files for public
 
 ## How to use
 
-Ensure you have `@esite/core` installed and add `"minify"` to the `Modules` to your `esite.yaml` .
+Install this package via `npm i @esite/minify` and make sure you have `@esite/core` installed.
 
 ## Configurations
 

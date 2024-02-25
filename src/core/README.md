@@ -32,7 +32,7 @@ Install `@esite/core` and create a file `esite.yaml` at the root of your project
 
 ## Configuration
 
-Note that additional modules added via the `Modules` configuration specify additional configuration they need in the `README.md` file.
+Note that additional modules may specify additional configuration they need in their `README.md` file.
 
 - SourcePath
   - Description: The folder which contains your code
@@ -49,11 +49,6 @@ Note that additional modules added via the `Modules` configuration specify addit
   - Type: boolean
   - Optional: true
   - Default: true
-- Modules: 
-  - Description: Additional @esite modules that you want to load (e.g. ["minify", "typescript"])
-  - Type: string[]
-  - Optional: true
-  - Default: []
 - Deploy: 
   - Description: The @esite deployment module to use for deployment (e.g. "s3") [learn more](#deploying)
   - Type: string

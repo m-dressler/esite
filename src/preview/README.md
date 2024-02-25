@@ -4,15 +4,20 @@ Enables esite projects to be previewed in the browser.
 
 ## How to use
 
-Ensure you have `@esite/core` installed.
+Install this package via `npm i @esite/preview` and make sure you have `@esite/core` installed.
 
-Add a command `"preview": "esite-preview"` to your package.json scripts and 
+Add a command `"preview": "esite-preview"` to your package.json scripts and run `npm run preview` to start the preview server.
 
-In your `esite.yaml` you can specify the following keys:
+## Configurations
 
-```
-PreviewPort: number = 8080
-ErrorDocument: string = /error.html
-```
-
-Finally, run `npm run preview` to start the preview server.
+- PreviewPort
+  - Description: The port to run the preview server on
+  - Type: number
+  - Optional: true
+  - Default: 8080
+- ErrorDocument
+  - Description: The document to serve when an item is not found
+  - Type: string
+  - Optional: true
+  - Default: "/error.html"
+  

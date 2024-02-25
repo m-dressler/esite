@@ -4,7 +4,7 @@ Use [cache-busting](https://www.keycdn.com/support/what-is-cache-busting) to ens
 
 ## How to use
 
-Ensure you have `@esite/core` installed and add `"cache-bust"` to the `Modules` to your `esite.yaml` .
+Install this package via `npm i @esite/cache-bust` and make sure you have `@esite/core` installed.
 
 Wherever you would like to use cache-busting, simply add `[CACHE_BUST]` or `[CACHE_BUST=<PATH_TO_TARGET_FILE>]` which @esite/cache-bust will automatically replace with the target's hash value.
 

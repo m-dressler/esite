@@ -7,6 +7,13 @@ The content is encrypted with a randomly generated IV prepended to the text and 
 
 ## How to use
 
-Ensure you have `@esite/core` installed and add `"encrypt"` to the `Modules` as well as a base64 encoded AES key to `EncryptionKey` to your `esite.yaml` .
+Install this package via `npm i @esite/encrypt` and make sure you have `@esite/core` installed.
 
-For every folder (recursively) where you want the content to be encrypted, add an `.esite-encrypt` file to the root of the folder. During the build step, every file in that folder (recursively) will now be repla
+For every folder (recursively) where you want the content to be encrypted, add an `.esite-encrypt` file to the root of the folder. During the build step, every file in that folder (recursively) will now be replaced.
+
+## Configurations
+
+- EncryptionKey
+  - Description: The Base64 encoded key that you want to use to encrypt files
+  - Type: string
+  - Optional: false
