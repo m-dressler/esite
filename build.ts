@@ -9,6 +9,11 @@ const exec = promisify(child_process.exec);
 
 const args = process.argv.slice(2);
 
+const abort = (reason: string) => {
+  console.error(reason);
+  process.exit(1);
+};
+
 const getModuleNames = () => {
   const files = fs.readdirSync(".");
   return files.filter(
@@ -81,8 +86,8 @@ const buildProject = async (projectName: string) => {
     } catch (error) {
       fs.rmSync(projectPath + "tsconfig.json");
       if (error && typeof error === "object" && "stdout" in error) {
-        console.error(error.stdout);
-        process.exit(1);
+        const { stdout } = error;
+        abort(typeof stdout === "string" ? stdout : String(stdout));
       } else throw error;
     }
   };
@@ -143,16 +148,15 @@ const publishProject = async (projectName: string) => {
 
 const executers = {
   version: async () => {
-    if (args.length !== 2) {
-      console.error("Unexpected argument count, expected only 1");
-      process.exit(1);
-    }
+    if (args.length !== 2)
+      throw abort("Unexpected argument count, expected exactly 1 argument");
     const versions = ["major", "minor", "patch"] as const;
     const versionChange = args[1] as (typeof versions)[number];
-    if (!versions.includes(versionChange)) {
-      console.error("Invalid version provided, use one of", versions);
-      process.exit(1);
-    }
+    if (!versions.includes(versionChange))
+      throw abort(
+        "Invalid version provided, use one of " + versions.join(", ")
+      );
+
     const indexJs = JSON.parse(fs.readFileSync("./package.json", "utf-8"));
     const version = indexJs.version.split(".").map(Number) as number[];
     const versionIndex = versions.indexOf(versionChange);
@@ -171,16 +175,12 @@ const executers = {
     getModuleNames().forEach(updateVersion);
   },
   build: async () => {
-    if (args.length > 2) {
-      console.error("Unexpected argument count, expected only 0 or 1");
-      process.exit(1);
-    }
+    if (args.length > 2)
+      throw abort("Unexpected argument count, expected only 0 or 1");
     const project = args[1];
     if (project) {
-      if (!fs.existsSync("./" + project)) {
-        console.error(`Cannot build project ${project} as it doesn't exist`);
-        process.exit(1);
-      }
+      if (!fs.existsSync("./" + project))
+        throw abort(`Cannot build project ${project} as it doesn't exist`);
       await buildProject(project);
     } else await Promise.all(getModuleNames().map(buildProject));
   },
@@ -201,8 +201,7 @@ if (!executer) {
   const error = command
     ? `Command "${command}" does not exist`
     : "Missing a command";
-  console.error(`${error}. For further detail run with command "help"`);
-  process.exit(1);
+  abort(`${error}. For further detail run with command "help"`);
 }
 
 Promise.resolve(executer()).catch((e: any) => {
