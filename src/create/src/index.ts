@@ -72,7 +72,8 @@ for (const dependency in packageJson.dependencies) {
 }
 
 const fsOperations = Object.entries(defaults).map(([path, value]) => {
-  const string = typeof value === "string" ? value : JSON.stringify(value);
+  const string =
+    typeof value === "string" ? value : JSON.stringify(value, null);
   fs.writeFile(projectFolder + "/" + path, string);
 });
 await Promise.all(fsOperations);
