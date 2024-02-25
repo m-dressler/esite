@@ -1,7 +1,6 @@
 import * as terser from "terser";
 import HtmlMinify from "html-minifier";
 import CleanCSS from "clean-css";
-import type { BuildConfig, Configuration } from "../../core/src";
 import { promises as fs } from "fs";
 import ImageMinJpeg from "imagemin-jpegtran";
 import ImageMinPng from "imagemin-optipng";

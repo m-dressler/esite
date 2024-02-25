@@ -1,10 +1,7 @@
 #!/usr/bin/env node
 import fs from "fs/promises";
-import { Config, RunFunction, BuildConfig } from "./config.js";
+import { Config } from "./config.js";
 import { build } from "./build.js";
-import type { Configuration } from "./config.js";
-import { DeployFunction } from "./config.js";
-export type { Config, Configuration, RunFunction, BuildConfig };
 
 // If a esite module set this env var we execute it, not the standard logic
 if (process.env.ESITE_EXEC_MODULE) {

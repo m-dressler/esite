@@ -3,7 +3,6 @@ import { S3 } from "@aws-sdk/client-s3";
 import mime from "mime";
 import fs from "fs";
 import { CloudFront } from "@aws-sdk/client-cloudfront";
-import type { Configuration, DeployFunction } from "../../core/src/config.js";
 
 const AwsCredentials = (() => {
   const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = process.env;

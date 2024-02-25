@@ -59,7 +59,10 @@ const buildProject = async (projectName: string) => {
   };
 
   const tsCompile = async () => {
-    fs.copyFileSync("./tsconfig.json", projectPath + "tsconfig.json");
+    let tsconfig = fs.readFileSync("./tsconfig.json", "utf-8");
+    tsconfig = tsconfig.replace("./core/", "../core/");
+    fs.writeFileSync(projectPath + "tsconfig.json", tsconfig);
+
     try {
       await exec("tsc", { cwd: projectPath });
 

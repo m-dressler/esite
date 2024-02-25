@@ -1,5 +1,7 @@
 import fs from "fs/promises";
-import { BuildConfig, Config, ConfigValue } from "./config.js";
+import { Config } from "./config.js";
+
+export type Build = typeof build;
 
 /** A sorted array of individual build steps grouped by parallelizable steps */
 const buildSteps: Omit<BuildConfig, "step">[][] = [[]];
@@ -19,7 +21,7 @@ export const addBuildSteps = (...steps: BuildConfig[]) => {
 const runBuildSteps = async (
   steps: Omit<BuildConfig, "step">[],
   type: "dev" | "prod",
-  config: ConfigValue<{}> & typeof Config
+  config: BaseConfiguration
 ) => {
   // If we are building for dev but it's not required, skip
   if (type === "dev") steps = steps.filter((s) => s.devRequired);
@@ -57,7 +59,6 @@ export const build = async (type: "dev" | "prod") => {
   // Copy all files to build
   await fs.cp(Config.SourcePath, Config.BuildPath, { recursive: true });
 
-  const config = Config as ConfigValue<{}> & typeof Config;
   for (let i = 0; i < buildSteps.length; ++i)
-    await runBuildSteps(buildSteps[i], type, config);
+    await runBuildSteps(buildSteps[i], type, Config);
 };

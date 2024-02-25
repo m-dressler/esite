@@ -1,4 +1,3 @@
-import type { BuildConfig, Configuration } from "../../core/src";
 import { promises as fs } from "fs";
 import * as sass from "sass-embedded";
 

@@ -1,55 +1,9 @@
 import fs from "fs/promises";
 import yaml from "yaml";
-import { addBuildSteps, build } from "./build.js";
+import { addBuildSteps } from "./build.js";
+import { Types } from "./types.js";
 
-type Types = "string" | "boolean" | "number" | "string[]";
-type TypeMapper = {
-  string: string;
-  number: number;
-  boolean: boolean;
-  "string[]": string[];
-};
-type ConfigurationValidator<
-  T extends Types = "string",
-  Type = TypeMapper[T]
-> = {
-  type?: T;
-  parser?: (str: Type) => any;
-} & ({ optional: false } | { optional: true; default: Type });
-export type Configuration = {
-  [key: string]:
-    | ConfigurationValidator<"boolean">
-    | ConfigurationValidator<"number">
-    | ConfigurationValidator<"string">
-    | ConfigurationValidator<"string[]">;
-};
-export type ConfigValue<T extends Configuration> = {
-  [key in keyof T]: "parser" extends keyof T[key]
-    ? // @ts-expect-error
-      ReturnType<T[key]["parser"]>
-    : "type" extends keyof T[key]
-    ? // @ts-expect-error
-      TypeMapper[T[key]["type"]]
-    : string;
-};
-export type BuildConfig<T extends Configuration = {}> = {
-  /** The function that builds the step */
-  build: (config: typeof Config & ConfigValue<T>) => any;
-  /** Low step BuildConfigs run before high step BuildConfigs while all same step configs may be run in parallel */
-  step: number;
-  /** If this step is required to create the dev version of the project */
-  devRequired: boolean;
-};
-export type RunFunction<T extends Configuration = {}> = (params: {
-  Config: typeof Config & ConfigValue<T>;
-  build: typeof build;
-}) => any;
-export type DeployFunction<T extends Configuration = {}> = (
-  files: string[],
-  params: {
-    Config: typeof Config & ConfigValue<T>;
-  }
-) => any;
+export type CoreConfigValidator = typeof configValidator;
 
 const configFile = "esite.yaml";
 
@@ -164,7 +118,7 @@ const isOfType = <T extends Types>(value: unknown, type: T): value is any => {
 
 const validateConfig = (unsafeConfig: {
   [key: string]: any;
-}): ConfigValue<typeof configValidator> => {
+}): BaseConfiguration => {
   type ConfigurationValidators = keyof typeof configValidator;
   const configKeys = Object.keys(configValidator) as ConfigurationValidators[];
   const alienKeys = Object.keys(unsafeConfig).filter(
@@ -178,7 +132,7 @@ const validateConfig = (unsafeConfig: {
   }[] = [];
 
   type Writeable<T> = { -readonly [P in keyof T]: T[P] };
-  const config: Partial<Writeable<ConfigValue<typeof configValidator>>> = {};
+  const config: Partial<Writeable<BaseConfiguration>> = {};
   for (let i = 0; i < configKeys.length; ++i) {
     const key = configKeys[i];
     const validator = configValidator[key];
@@ -225,7 +179,7 @@ const validateConfig = (unsafeConfig: {
       alienKeys,
       "\x1b[0m"
     );
-  return config as ConfigValue<typeof configValidator>;
+  return config as BaseConfiguration;
 };
 
 const unsafeConfig = await loadConfigFile();

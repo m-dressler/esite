@@ -2,7 +2,6 @@
 import http, { IncomingMessage, ServerResponse } from "http";
 import fs from "fs";
 import mime from "mime";
-import type { Configuration, RunFunction } from "../../core/src";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { Readable, Stream, Transform } from "stream";

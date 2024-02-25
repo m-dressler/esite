@@ -1,4 +1,3 @@
-import type { BuildConfig, Configuration } from "../../core/src";
 import fsSync, { promises as fs } from "fs";
 import crypto from "crypto";
 import path from "path";
