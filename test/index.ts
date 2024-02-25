@@ -12,13 +12,6 @@ const exists = (path: string) =>
     () => false
   );
 
-const packageJson = {
-  name: "debug",
-  version: "0.0.0",
-  type: "module",
-  dependencies: {} as { [key: string]: string },
-};
-
 const loadModule = async (module: string) => {
   const moduleFolder = "./test/node_modules/@esite/" + module + "/";
   // TS Build
@@ -27,12 +20,7 @@ const loadModule = async (module: string) => {
   await exec("npm run build " + module, { cwd: "." });
 
   await fs.mkdir(moduleFolder, { recursive: true });
-  const copy = fs.cp(`./src/${module}/`, moduleFolder, { recursive: true });
-
-  const packageStr = await fs.readFile(`./src/${module}/package.json`, "utf-8");
-  const pckg = JSON.parse(packageStr);
-  packageJson.dependencies["@esite/" + module] = pckg.version;
-  await copy;
+  await fs.cp(`./src/${module}/`, moduleFolder, { recursive: true });
 };
 
 let currentProcess: ChildProcess | null = null;
@@ -85,10 +73,6 @@ const rebuild = (module: string) => {
   }
   await Promise.all(modulePromises);
 
-  // await fs.writeFile(
-  //   "./test/package.json",
-  //   JSON.stringify(packageJson, null, 2)
-  // );
   await startProcess();
 })();
 
