@@ -87,6 +87,7 @@ const buildProject = async (projectName: string) => {
       fs.rmSync(projectPath + "tsconfig.json");
       if (error && typeof error === "object" && "stdout" in error) {
         const { stdout } = error;
+        console.error("The following tsc error ocurred in", projectPath)
         abort(typeof stdout === "string" ? stdout : String(stdout));
       } else throw error;
     }
