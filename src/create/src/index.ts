@@ -17,7 +17,7 @@ export const abort = (reason?: "error") => {
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const defaults = {
-  "epage.yaml": `SourcePath: "./src/"
+  "esite.yaml": `SourcePath: "./src/"
 BuildPath: "./build/"
 RemoveHtmlExtension: true
 PreviewPort: 8080
