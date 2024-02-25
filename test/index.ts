@@ -18,8 +18,6 @@ const loadModule = async (module: string) => {
   if (await exists(moduleFolder))
     await fs.rm(moduleFolder, { recursive: true });
   await exec("npm run build " + module, { cwd: "." });
-
-  await fs.mkdir(moduleFolder, { recursive: true });
   await fs.cp(`./src/${module}/`, moduleFolder, { recursive: true });
 };
 
