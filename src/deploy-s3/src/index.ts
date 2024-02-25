@@ -33,7 +33,7 @@ export const CustomConfig = {
       if (str !== "__NONE__") return str;
       // Warns about using S3 w/o cloudfront
       console.warn(
-        "@epage/deploy-s3 | It's highly recommended to use a CloudFront distribution to serve your S3 hosted website"
+        "@esite/deploy-s3 | It's highly recommended to use a CloudFront distribution to serve your S3 hosted website"
       );
       return "";
     },

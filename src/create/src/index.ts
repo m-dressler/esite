@@ -8,7 +8,7 @@ import type { AwsCredentialIdentity } from "@aws-sdk/types/dist-types/identity";
 
 export const abort = (reason?: "error") => {
   let message = "Aborting";
-  if (reason === "error") message += " - an unexpected error occured";
+  if (reason === "error") message += " - an unexpected error occurred";
   console.error(message);
   process.exit(0);
 };

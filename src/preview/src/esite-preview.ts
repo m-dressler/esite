@@ -27,7 +27,7 @@ if ("fetch" in window) {
         const { event } = await res.json();
         if (event === "reload") location.reload();
         else if (event === "css") refreshCSS();
-        else alert("Unknown asws-preview event " + event);
+        else alert("Unknown esite-preview event " + event);
       }
     };
     // Constantly query events

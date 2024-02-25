@@ -3,7 +3,7 @@ import { Config } from "./config.js";
 
 export type Build = typeof build;
 
-/** A sorted array of individual build steps grouped by parallelizable steps */
+/** A sorted array of individual build steps grouped by steps that can be run in parallel */
 const buildSteps: Omit<BuildConfig, "step">[][] = [[]];
 
 export const addBuildSteps = (...steps: BuildConfig[]) => {

@@ -15,11 +15,11 @@ const loadDecrypted = async () => {
   );
   const encrypted = buff.slice(16);
   const iv = buff.slice(0, 16);
-  const rawkey = Uint8Array.from(
+  const rawKey = Uint8Array.from(
     atob("KeHNaDKDSiO/7Ov4BHS5EpInj3W8+9iL2LB7KxkfbFo="),
     (c) => c.charCodeAt(0)
   );
-  const key = await crypto.subtle.importKey("raw", rawkey, "AES-CBC", true, [
+  const key = await crypto.subtle.importKey("raw", rawKey, "AES-CBC", true, [
     "decrypt",
   ]);
   const decrypted = await crypto.subtle.decrypt(
