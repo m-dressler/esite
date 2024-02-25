@@ -68,7 +68,7 @@ const buildProject = async (projectName: string) => {
 
       // Check index.js exists
       await fs.promises
-        .access(buildFolderName + "/index.js", fs.constants.F_OK)
+        .access(buildFolderName + "index.js", fs.constants.F_OK)
         .catch(async () => {
           // If it doesn't exist, try to extract folder
           const moduleFolder = `${buildFolderName}${projectName}/src/`;
