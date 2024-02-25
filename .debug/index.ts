@@ -20,25 +20,25 @@ const packageJson = {
 };
 
 const loadModule = async (module: string) => {
-  const moduleFolder = "./.debug/node_modules/@awsw/" + module + "/";
+  const moduleFolder = "./.debug/node_modules/@esite/" + module + "/";
   // TS Build
   if (await exists(moduleFolder))
     await fs.rm(moduleFolder, { recursive: true });
-  await exec("npm run build -- --project " + module, { cwd: "." });
+  await exec("npm run build " + module, { cwd: "." });
 
   await fs.mkdir(moduleFolder, { recursive: true });
   const copy = fs.cp(`./${module}/`, moduleFolder, { recursive: true });
 
   const packageStr = await fs.readFile(`./${module}/package.json`, "utf-8");
   const pckg = JSON.parse(packageStr);
-  packageJson.dependencies["@awsw/" + module] = pckg.version;
+  packageJson.dependencies["@esite/" + module] = pckg.version;
   await copy;
 };
 
 let currentProcess: ChildProcess | null = null;
 
 const startProcess = async () => {
-  const binary = `./node_modules/@awsw/${runModule}/lib/index.js`;
+  const binary = `./node_modules/@esite/${runModule}/lib/index.js`;
   await exec("chmod +x " + binary, { cwd: "./.debug" });
   currentProcess = spawn(binary, { cwd: "./.debug", stdio: "inherit" });
   await new Promise((res) => currentProcess?.on("exit", res));
@@ -76,7 +76,7 @@ const rebuild = (module: string) => {
   for (let i = 0; i < dirs.length; ++i) {
     const dir = dirs[i];
     // Filter any files (with .), starter
-    if (dir.includes(".") || dir === "starter") continue;
+    if (dir.includes(".") || dir === "create") continue;
     // Filter out unimplemented modules
     if (!(await exists(`./${dir}/src/`))) continue;
     console.log("Building module", dir);
