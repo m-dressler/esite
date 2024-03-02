@@ -1,0 +1,16 @@
+{
+  "name": "@esite/typescript",
+  "version": "0.6.3",
+  "description": "",
+  "type": "module",
+  "main": "lib/index.js",
+  "keywords": [
+    "website",
+    "static-website"
+  ],
+  "files": [
+    "lib/**/*"
+  ],
+  "author": "mDressler",
+  "license": "ISC"
+}
