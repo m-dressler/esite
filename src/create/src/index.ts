@@ -42,6 +42,7 @@ CloudfrontId: <CLOUDFRONT_ID>
     },
   },
   ".env": "AWS_ACCESS_KEY_ID=<MISSING>\nAWS_SECRET_ACCESS_KEY=<MISSING>",
+  ".gitignore": ["node_modules", "build", ".env"].join("\n"),
   "src/index.html": "<h1>Hello World</h1>",
   "src/error.html": "<h1>Oh no, an error occurred</h1>",
 };
