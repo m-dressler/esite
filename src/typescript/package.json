@@ -1,6 +1,6 @@
 {
   "name": "@esite/typescript",
-  "version": "0.6.3",
+  "version": "0.7.0",
   "description": "",
   "type": "module",
   "main": "lib/index.js",

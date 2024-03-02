@@ -1,6 +1,6 @@
 {
   "name": "create-esite",
-  "version": "0.6.3",
+  "version": "0.7.0",
   "description": "",
   "main": "lib/index.js",
   "bin": "lib/index.js",
