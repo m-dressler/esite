@@ -31,8 +31,8 @@ CloudfrontId: <CLOUDFRONT_ID>
     version: "0.0.1",
     description: "Your newly created esite project",
     scripts: {
-      preview: "esite-preview",
-      publish: "esite-core",
+      deploy: "esite deploy",
+      preview: "esite exec preview",
     },
     dependencies: {
       "@esite/core": "0.0.0",

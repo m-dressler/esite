@@ -4,10 +4,6 @@
   "description": "",
   "type": "module",
   "main": "lib/index.js",
-  "bin": {
-    "esite-preview": "./lib/index.js",
-    "esitepreview": "./lib/index.js"
-  },
   "keywords": [
     "website",
     "static-website"

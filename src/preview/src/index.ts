@@ -239,18 +239,3 @@ export const run: RunFunction<typeof CustomConfig> = async ({
     console.log(`Preview running on http://localhost:${port}`)
   );
 };
-
-process.env.ESITE_EXEC_MODULE = "preview";
-
-// @ts-expect-error
-import("@esite/core").catch((err) => {
-  if (
-    err instanceof Error &&
-    err.message.includes("Cannot find module '") &&
-    err.message.includes("@esite/core")
-  ) {
-    console.error("@esite/core not installed - please install it first.");
-    process.exit(1);
-  }
-  throw err;
-});

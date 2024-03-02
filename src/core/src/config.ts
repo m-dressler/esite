@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import yaml from "yaml";
 import { addBuildSteps } from "./build.js";
 import { Types } from "./types.js";
+import { logError, terminate } from "./util.js";
 
 export type CoreConfigValidator = typeof configValidator;
 
@@ -39,13 +40,6 @@ const configValidator = {
     type: "string[]",
   },
 } as const satisfies Configuration;
-
-const logError = (...args: [any, ...any[]]) =>
-  console.error("\x1b[31m" + args[0].toString(), ...args.slice(1), "\x1b[31m");
-const terminate = (message?: string) => {
-  if (message) logError(message);
-  process.exit(1);
-};
 
 const loadOtherModules = async () => {
   let moduleNames = await fs.readdir("./node_modules/@esite/");

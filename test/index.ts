@@ -4,7 +4,7 @@ import { spawn, exec as execCb, ChildProcess } from "child_process";
 import { promisify } from "util";
 const exec = promisify(execCb);
 
-const runModule = "preview";
+const runModule: string | undefined = "preview";
 
 const exists = (path: string) =>
   fs.stat(path).then(
@@ -24,9 +24,10 @@ const loadModule = async (module: string) => {
 let currentProcess: ChildProcess | null = null;
 
 const startProcess = async () => {
-  const binary = `./node_modules/@esite/${runModule}/lib/index.js`;
+  const binary = `./node_modules/@esite/core/lib/index.js`;
   await exec("chmod +x " + binary, { cwd: "./test" });
-  currentProcess = spawn(binary, { cwd: "./test", stdio: "inherit" });
+  const argv = runModule ? ["exec", runModule] : ["deploy"];
+  currentProcess = spawn(binary, argv, { cwd: "./test", stdio: "inherit" });
   await new Promise((res) => currentProcess?.on("exit", res));
 };
 
