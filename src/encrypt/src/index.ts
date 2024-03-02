@@ -1,6 +1,5 @@
 import * as crypto from "crypto";
 import { promises as fs } from "fs";
-import "dotenv/config";
 
 const getBufferBase64Parser = (lengths: [number, ...number[]]) => {
   let error = "a base64 encoded key of byte length ";
