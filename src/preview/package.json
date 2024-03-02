@@ -12,7 +12,7 @@
     "lib/**/*"
   ],
   "author": "mDressler",
-  "license": "MIT",
+  "license": "ISC",
   "dependencies": {
     "mime": "^3.0.0"
   },
