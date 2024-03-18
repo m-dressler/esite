@@ -6,16 +6,28 @@ const exec = promisify(execCb);
 
 export const CustomConfig = {} as const satisfies Configuration;
 
+const listTsFiles = async (path: string) => {
+  const allFiles = await fs.readdir(path, { recursive: true });
+  return allFiles.filter((f) => f.endsWith(".ts")).map((f) => path + f);
+};
+
 export const buildConfig: BuildConfig<typeof CustomConfig> = {
   step: 50_000,
   devRequired: true,
   build: async (Config) => {
-    const allFiles = await fs.readdir(Config.BuildPath, { recursive: true });
-    const tsFiles = allFiles
-      .filter((f) => f.endsWith(".ts"))
-      .map((f) => Config.BuildPath + f);
-    if (!tsFiles.length) return;
-    await exec("tsc " + tsFiles.map((f) => `"${f}"`).join(" "));
+    await fs
+      .copyFile("./tsconfig.json", Config.BuildPath + "tsconfig.json")
+      // If file doesn't exist ignore and compile with default options 
+      .catch(() => {});
+
+    const tsFilesPromise = listTsFiles(Config.BuildPath);
+    await exec("tsc", { cwd: Config.BuildPath });
+    
+    // Delete all the ts files from build
+    const tsFiles = await tsFilesPromise;
     await Promise.all(tsFiles.map((f) => fs.rm(f)));
+
+    // Delete tsconfig.json if present
+    await fs.rm(Config.BuildPath + "tsconfig.json").catch(() => {});
   },
 };

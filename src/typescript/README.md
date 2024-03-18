@@ -8,4 +8,6 @@ Install this package via `npm i @esite/typescript` and make sure you have `@esit
 
 IMPORTANT: Also make sure you have [typescript installed](https://www.geeksforgeeks.org/how-to-install-typescript/), preferably globally.
 
+Finally, add a `./tsconfig.json` file in the project root directory.
+
 Any files ending in `.ts` will now automatically be compiled into `.js` files.
