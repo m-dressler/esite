@@ -1,6 +1,6 @@
 {
   "name": "@esite/cache-bust",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "",
   "main": "lib/index.js",
   "type": "module",
