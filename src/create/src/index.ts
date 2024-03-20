@@ -16,36 +16,6 @@ export const abort = (reason?: "error") => {
 };
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
-const defaults = {
-  "esite.yaml": `SourcePath: "./src/"
-BuildPath: "./build/"
-RemoveHtmlExtension: true
-PreviewPort: 8080
-
-BucketName: <MY_BUCKET>
-BucketRegion: <AWS_BUCKET_REGION>
-CloudfrontId: <CLOUDFRONT_ID>
-`,
-  "package.json": {
-    name: "placeholder",
-    version: "0.0.1",
-    description: "Your newly created esite project",
-    scripts: {
-      deploy: "esite deploy",
-      preview: "esite exec preview",
-    },
-    dependencies: {
-      "@esite/core": "0.0.0",
-      "@esite/preview": "0.0.0",
-      "@esite/minify": "0.0.0",
-      "@esite/deploy-s3": "0.0.0",
-    },
-  },
-  ".env": "AWS_ACCESS_KEY_ID=<MISSING>\nAWS_SECRET_ACCESS_KEY=<MISSING>",
-  ".gitignore": ["node_modules", "build", ".env"].join("\n"),
-  "src/index.html": "<h1>Hello World</h1>",
-  "src/error.html": "<h1>Oh no, an error occurred</h1>",
-};
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -56,27 +26,37 @@ export const prompt = (query: string) =>
   new Promise<string>((resolve) => rl.question(query + "\n> ", resolve));
 
 const projectNamePromise = prompt("Project Name");
-const versionPromise = fs
+const esiteVersionPromise = fs
   .readFile(path.resolve(currentDir, "../package.json"), "utf-8")
   .then((res) => JSON.parse(res).version as string);
 const projectName = await projectNamePromise;
 
 const projectFolder = "./" + projectName;
 console.log("Setting up project", projectName, "in folder", projectFolder);
-await fs.mkdir(projectFolder + "/src", { recursive: true });
 
-const packageJson = defaults["package.json"];
-packageJson.name = projectName;
-for (const dependency in packageJson.dependencies) {
-  packageJson.dependencies[
-    dependency as keyof typeof packageJson.dependencies
-  ] = await versionPromise;
-}
+// Copy scaffold to folder
+await fs.cp(path.resolve(currentDir, "./scaffold/"), projectFolder, {
+  recursive: true,
+});
 
-const fsOperations = Object.entries(defaults).map(([path, value]) => {
-  const string =
-    typeof value === "string" ? value : JSON.stringify(value, null);
-  fs.writeFile(projectFolder + "/" + path, string);
+const files = await fs.readdir(projectFolder, {
+  recursive: true,
+  withFileTypes: true,
+});
+const fsOperations = files.map(async (dirent) => {
+  if (!dirent.isFile()) return;
+
+  const path = projectFolder + "/" + dirent.path;
+  let content = await fs.readFile(path, "utf-8");
+  content = content.replaceAll("{{PROJECT_NAME}}", projectName);
+  content = content.replaceAll("{{VERSION}}", await esiteVersionPromise);
+  // Just write back if normal file
+  if (!(path.endsWith(".mts") || path.includes("/__dot__")))
+    await fs.writeFile(path, content);
+  else {
+    const newPath = path.replace(/\.mts$/, ".ts").replace("/__dot__", "/.");
+    await Promise.all([fs.rm(path), fs.writeFile(newPath, content)]);
+  }
 });
 await Promise.all(fsOperations);
 
