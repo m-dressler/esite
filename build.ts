@@ -7,7 +7,8 @@ import crypto from "crypto";
 
 const exec = promisify(child_process.exec);
 
-const args = process.argv.slice(2);
+const args = process.argv.slice(2).filter((arg) => !arg.startsWith("--"));
+const flags = process.argv.slice(2).filter((arg) => arg.startsWith("--"));
 
 const abort = (reason: string) => {
   console.error(reason);
@@ -139,7 +140,7 @@ const publishProject = async (projectName: string) => {
   const otp = getTotp();
 
   let command = "pnpm publish --access public --otp " + otp;
-  if (args.includes("--no-git")) command += " --git-check false";
+  if (flags.includes("--no-git")) command += " --git-check false";
 
   const { stdout, stderr } = await exec(command, { cwd: projectPath });
   console.log(stdout, stderr);
