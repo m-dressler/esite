@@ -46,7 +46,7 @@ const files = await fs.readdir(projectFolder, {
 const fsOperations = files.map(async (dirent) => {
   if (!dirent.isFile()) return;
 
-  const filePath = path.resolve(projectFolder, dirent.path, dirent.name);
+  const filePath = path.resolve(dirent.path, dirent.name);
   let content = await fs.readFile(filePath, "utf-8");
   content = content.replaceAll("{{PROJECT_NAME}}", projectName);
   content = content.replaceAll("{{VERSION}}", await esiteVersionPromise);
@@ -57,7 +57,7 @@ const fsOperations = files.map(async (dirent) => {
     const newName = dirent.name
       .replace(/\.mts$/, ".ts")
       .replace(/^__dot__/, ".");
-    const newPath = path.resolve(projectFolder, dirent.path, newName);
+    const newPath = path.resolve(dirent.path, newName);
     await Promise.all([fs.rm(filePath), fs.writeFile(newPath, content)]);
   }
 });
