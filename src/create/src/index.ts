@@ -46,16 +46,19 @@ const files = await fs.readdir(projectFolder, {
 const fsOperations = files.map(async (dirent) => {
   if (!dirent.isFile()) return;
 
-  const path = projectFolder + "/" + dirent.path;
-  let content = await fs.readFile(path, "utf-8");
+  const filePath = path.resolve(projectFolder, dirent.path, dirent.name);
+  let content = await fs.readFile(filePath, "utf-8");
   content = content.replaceAll("{{PROJECT_NAME}}", projectName);
   content = content.replaceAll("{{VERSION}}", await esiteVersionPromise);
   // Just write back if normal file
-  if (!(path.endsWith(".mts") || path.includes("/__dot__")))
-    await fs.writeFile(path, content);
+  if (!(dirent.name.endsWith(".mts") || dirent.name.startsWith("__dot__")))
+    await fs.writeFile(filePath, content);
   else {
-    const newPath = path.replace(/\.mts$/, ".ts").replace("/__dot__", "/.");
-    await Promise.all([fs.rm(path), fs.writeFile(newPath, content)]);
+    const newName = dirent.name
+      .replace(/\.mts$/, ".ts")
+      .replace(/^__dot__/, ".");
+    const newPath = path.resolve(projectFolder, dirent.path, newName);
+    await Promise.all([fs.rm(filePath), fs.writeFile(newPath, content)]);
   }
 });
 await Promise.all(fsOperations);
