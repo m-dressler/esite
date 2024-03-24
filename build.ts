@@ -1,5 +1,5 @@
 import * as child_process from "child_process";
-import fs, { readdirSync } from "fs";
+import fs from "fs";
 import { minify } from "terser";
 import { promisify } from "util";
 import "dotenv/config";
@@ -25,7 +25,7 @@ const buildProject = async (projectName: string) => {
   const buildFolderName = projectPath + "lib/";
 
   const listFiles = (path: string, type?: string | string[]) => {
-    let files = readdirSync(path, {
+    let files = fs.readdirSync(path, {
       recursive: true,
       encoding: "utf-8",
     });
@@ -61,26 +61,28 @@ const buildProject = async (projectName: string) => {
 
     try {
       await exec("tsc", { cwd: projectPath });
+      let tscOutputFolder = projectPath + "build/";
 
       // Check index.js exists
-      await fs.promises
+      const hasIndex = await fs.promises
         .access(buildFolderName + "index.js", fs.constants.F_OK)
-        .catch(async () => {
-          // If it doesn't exist, try to extract folder
-          const moduleFolder = `${buildFolderName}${projectName}/src/`;
-          const tempFolder = `${projectPath}temp/`;
-          const folderExists = await fs.promises
-            .access(moduleFolder, fs.constants.F_OK)
-            .then(
-              () => true,
-              () => false
-            );
-          fs.rmSync(tempFolder, { recursive: true, force: true });
-          fs.renameSync(moduleFolder, tempFolder);
-          fs.rmSync(buildFolderName, { recursive: true });
-          fs.renameSync(tempFolder, buildFolderName);
-          if (!folderExists) throw { stdout: "Unexpected build error (TS1)" };
-        });
+        .then(
+          () => true,
+          () => false
+        );
+      // Copy files from subfolder
+      if (!hasIndex) {
+        tscOutputFolder += projectName + "/src/";
+        const files = listFiles(tscOutputFolder);
+        for (const file of files) {
+          const target = file.replace(tscOutputFolder, buildFolderName);
+          fs.cpSync(file, target, {
+            recursive: true,
+            mode: fs.constants.COPYFILE_EXCL,
+          });
+        }
+      }
+      fs.rmSync(projectPath + "build", { recursive: true });
       fs.rmSync(projectPath + "tsconfig.json");
     } catch (error) {
       fs.rmSync(projectPath + "tsconfig.json");
@@ -113,6 +115,7 @@ const buildProject = async (projectName: string) => {
   };
 
   await clearDirectory(buildFolderName);
+  fs.cpSync(projectPath + "src", buildFolderName, { recursive: true });
   console.log(projectName + " | Compiling Typescript");
   await tsCompile();
   console.log(projectName + " | Minifying scripts");
