@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import readline from "readline";
+import inquirer from "inquirer";
 import fs from "fs/promises";
 import { fileURLToPath } from "url";
 import path from "path";
@@ -17,19 +17,15 @@ export const abort = (reason?: "error") => {
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
+const projectNamePromise = inquirer.prompt<{ projectName: string }>({
+  type: "input",
+  name: "projectName",
+  message: "Project Name",
 });
-
-export const prompt = (query: string) =>
-  new Promise<string>((resolve) => rl.question(query + "\n> ", resolve));
-
-const projectNamePromise = prompt("Project Name");
 const esiteVersionPromise = fs
   .readFile(path.resolve(currentDir, "../package.json"), "utf-8")
   .then((res) => JSON.parse(res).version as string);
-const projectName = await projectNamePromise;
+const { projectName } = await projectNamePromise;
 
 const projectFolder = "./" + projectName;
 console.log("Setting up project", projectName, "in folder", projectFolder);
@@ -64,7 +60,11 @@ const fsOperations = files.map(async (dirent) => {
 await Promise.all(fsOperations);
 
 console.log("\nProject created successfully");
-const install = await prompt("Do you want to install the dependencies? (y/n)");
+const { install } = await inquirer.prompt({
+  type: "confirm",
+  name: "install",
+  message: "Do you want to install the dependencies?",
+});
 if (["y", "ye", "yes", "yup"].includes(install.toLowerCase())) {
   const hasPnpm = await exec("pnpm --version").then(
     () => true,
