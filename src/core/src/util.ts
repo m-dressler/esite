@@ -1,12 +1,19 @@
-import logger from "loglevel";
+import log from "loglevel";
 
-const { error, warn } = logger;
-logger.error = (...args: [any, ...any[]]) =>
-  error("\x1b[31m" + args[0].toString(), ...args.slice(1), "\x1b[0m");
-logger.warn = (...args: [any, ...any[]]) =>
-  warn("\x1b[33m" + args[0].toString(), ...args.slice(1), "\x1b[0m");
+const originalFactory = log.methodFactory;
+log.methodFactory = (methodName, logLevel, loggerName) => {
+  const original = originalFactory(methodName, logLevel, loggerName);
+  if (methodName === "error")
+    return (...args) =>
+      original("\x1b[31m" + args[0].toString(), ...args.slice(1), "\x1b[0m");
+  else if (methodName === "warn")
+    return (...args) =>
+      original("\x1b[33m" + args[0].toString(), ...args.slice(1), "\x1b[0m");
+  else return original;
+};
+log.rebuild();
 
 export const terminate = (message?: string) => {
-  if (message) logger.error(message);
+  if (message) log.error(message);
   process.exit(1);
 };
