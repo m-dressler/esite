@@ -72,7 +72,11 @@ const buildProject = async (projectName: string) => {
         );
       // Copy files from subfolder
       if (!hasIndex) {
-        tscOutputFolder += projectName + "/src/";
+        if (projectName !== "core") tscOutputFolder += projectName + "/src/";
+        else {
+          tscOutputFolder += "src/";
+          await fs.promises.rm(buildFolderName, { recursive: true });
+        }
         const files = listFiles(tscOutputFolder);
         for (const file of files) {
           const target = file.replace(tscOutputFolder, buildFolderName);
