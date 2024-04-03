@@ -9,7 +9,7 @@
     "build": "ts-node --esm build.ts build",
     "publish": "ts-node --esm build.ts publish",
     "version": "ts-node --esm build.ts version",
-    "debug": "ts-node --esm test/index.ts"
+    "debug": "ts-node --esm test.ts"
   },
   "keywords": [],
   "author": "",
