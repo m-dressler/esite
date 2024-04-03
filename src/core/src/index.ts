@@ -8,6 +8,7 @@ import log from "loglevel";
 const args = process.argv.slice(2);
 
 log.setDefaultLevel("info");
+if (args.includes("--verbose")) log.setLevel("trace");
 
 const runModule = async () => {
   const moduleName = args[1];
@@ -31,7 +32,7 @@ const deploy = async () => {
   try {
     await build("prod");
   } catch (err) {
-    log.info("Build failed:");
+    log.error("Build failed:");
     if (err instanceof Error) log.error(err.message);
     else if (Array.isArray(err))
       err.forEach((error) =>
@@ -49,6 +50,7 @@ const deploy = async () => {
   if (deployModules.length === 0)
     log.info("Skipping deploy as no deploy modules installed");
   else {
+    log.info("Deploying with", deployModules);
     const directoryFiles = await fs.readdir(Config.BuildPath, {
       recursive: true,
       encoding: "utf-8",

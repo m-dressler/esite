@@ -49,7 +49,7 @@ const loadOtherModules = async () => {
   );
   let hadErrors = false;
   /** The build steps loaded from @esite/* modules */
-  const loadedBuildSteps: BuildConfig[] = [];
+  const loadedBuildSteps: (BuildConfig & { name: string })[] = [];
 
   for (let i = 0; i < moduleNames.length; ++i) {
     const moduleName = moduleNames[i];
@@ -58,7 +58,10 @@ const loadOtherModules = async () => {
       hadErrors = true;
     });
     if (!module) continue;
-    if ("buildConfig" in module) loadedBuildSteps.push(module.buildConfig);
+    if ("buildConfig" in module)
+      loadedBuildSteps.push(
+        Object.assign(module.buildConfig, { name: moduleName })
+      );
     if ("CustomConfig" in module)
       Object.assign(configValidator, module.CustomConfig);
     else {
