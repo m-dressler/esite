@@ -5,11 +5,19 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  loglevel:
+    specifier: ^1.9.1
+    version: 1.9.1
   yaml:
     specifier: ^2.2.2
     version: 2.2.2
 
 packages:
+
+  /loglevel@1.9.1:
+    resolution: {integrity: sha512-hP3I3kCrDIMuRwAwHltphhDM1r8i55H33GgqjXbrisuJhF4kRhW1dNuxsRklp4bXl8DSdLaNLuiL4A/LWRfxvg==}
+    engines: {node: '>= 0.6.0'}
+    dev: false
 
   /yaml@2.2.2:
     resolution: {integrity: sha512-CBKFWExMn46Foo4cldiChEzn7S7SRV+wqiluAb6xmueD/fGyRHIhX8m14vVGgeFWjN540nKCNVj6P21eQjgTuA==}

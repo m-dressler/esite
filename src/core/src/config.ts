@@ -2,7 +2,8 @@ import fs from "fs/promises";
 import yaml from "yaml";
 import { addBuildSteps } from "./build.js";
 import { Types } from "./types.js";
-import { logError, terminate } from "./util.js";
+import { terminate } from "./util.js";
+import log from "loglevel";
 
 export type CoreConfigValidator = typeof configValidator;
 
@@ -53,7 +54,7 @@ const loadOtherModules = async () => {
   for (let i = 0; i < moduleNames.length; ++i) {
     const moduleName = moduleNames[i];
     const module = await import("@esite/" + moduleName).catch(() => {
-      logError(`Couldn't load module @esite/${moduleName} not installed`);
+      log.error(`Couldn't load module @esite/${moduleName} not installed`);
       hadErrors = true;
     });
     if (!module) continue;
@@ -61,7 +62,7 @@ const loadOtherModules = async () => {
     if ("CustomConfig" in module)
       Object.assign(configValidator, module.CustomConfig);
     else {
-      logError(
+      log.error(
         `Invalid module @esite/${moduleName} has no export "CustomConfig"`
       );
       hadErrors = true;
@@ -147,21 +148,16 @@ const validateConfig = (unsafeConfig: {
   }
 
   if (missingKeys.length | invalidKeys.length) {
-    logError(`Invalid ${configFile}:`);
-    if (missingKeys.length) logError("Missing keys:", missingKeys);
+    log.error(`Invalid ${configFile}:`);
+    if (missingKeys.length) log.error("Missing keys:", missingKeys);
     if (invalidKeys.length) {
-      logError("Invalid keys:");
+      log.error("Invalid keys:");
       for (const { key, expected, value } of invalidKeys)
-        logError(`\t- "${key}" should be ${expected} but got "${value}"`);
+        log.error(`\t- "${key}" should be ${expected} but got "${value}"`);
     }
     terminate();
   }
-  if (alienKeys.length)
-    console.warn(
-      `\x1b[33mUnknown keys in ${configFile}:`,
-      alienKeys,
-      "\x1b[0m"
-    );
+  if (alienKeys.length) log.warn(`Unknown keys in ${configFile}:`, alienKeys);
   return config as BaseConfiguration;
 };
 

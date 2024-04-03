@@ -2,9 +2,12 @@
 import fs from "fs/promises";
 import { Config } from "./config.js";
 import { build } from "./build.js";
-import { logError, terminate } from "./util.js";
+import { terminate } from "./util.js";
+import log from "loglevel";
 
 const args = process.argv.slice(2);
+
+log.setDefaultLevel("info");
 
 const runModule = async () => {
   const moduleName = args[1];
@@ -28,23 +31,23 @@ const deploy = async () => {
   try {
     await build("prod");
   } catch (err) {
-    logError("Build failed:");
-    if (err instanceof Error) logError(err.message);
+    log.info("Build failed:");
+    if (err instanceof Error) log.error(err.message);
     else if (Array.isArray(err))
       err.forEach((error) =>
-        logError(error instanceof Error ? error.message : error)
+        log.error(error instanceof Error ? error.message : error)
       );
-    else logError(err);
+    else log.error(err);
     process.exit(1);
   }
 
-  console.log("Build successful");
+  log.info("Build successful");
 
   const deployModules = Config.Modules.filter((name) =>
     name.startsWith("deploy-")
   );
   if (deployModules.length === 0)
-    console.log("Skipping deploy as no deploy modules installed");
+    log.info("Skipping deploy as no deploy modules installed");
   else {
     const directoryFiles = await fs.readdir(Config.BuildPath, {
       recursive: true,
@@ -62,20 +65,20 @@ const deploy = async () => {
     for (const module of deployModules) {
       const deployModule = "@esite/" + module;
       const deployer = await import(deployModule).catch(() => {
-        console.error(
+        log.error(
           `Deploy setting in esite.yaml. ${deployModule} not installed`
         );
         process.exit(1);
       });
       if (!(deployer && "deploy" in deployer)) {
-        console.error(
+        log.error(
           `Invalid Deploy module ${deployModule} has no export "deploy"`
         );
         process.exit(1);
       }
 
       const deploy = deployer.deploy as DeployFunction;
-      console.log("Deploying to", module.replace("deploy-", ""));
+      log.info("Deploying to", module.replace("deploy-", ""));
       await deploy(files.flat(), { Config });
     }
   }
