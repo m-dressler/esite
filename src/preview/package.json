@@ -1,6 +1,6 @@
 {
   "name": "@esite/preview",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "",
   "type": "module",
   "main": "lib/index.js",
