@@ -19,6 +19,7 @@ export const buildConfig: BuildConfig<typeof CustomConfig> = {
         await fs.rm(filePath);
         log.debug("SCSS | Done", filePath);
       } catch (err) {
+        log.debug("SCSS | Compilation Error", filePath, err);
         if (err instanceof sass.Exception) {
           const line = err.span.start.line + 1;
           const filePos = `${Config.SourcePath}${fileName}:${line}`;
