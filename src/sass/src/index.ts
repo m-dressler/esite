@@ -10,16 +10,16 @@ export const buildConfig: BuildConfig<typeof CustomConfig> = {
     const sassCompile = async (fileName: string) => {
       const filePath = Config.BuildPath + fileName;
       try {
-        log.debug("SCSS | Compiling", filePath);
+        log.debug("SASS | Compiling", filePath);
         const { css } = await sass.compileAsync(filePath, {});
         const cssPath = filePath.replace(/\.(scss|sass)$/, ".css");
-        log.debug("SCSS | Writing file", cssPath);
+        log.debug("SASS | Writing file", cssPath);
         await fs.writeFile(cssPath, css, { encoding: "utf-8" });
-        log.debug("SCSS | Removing file", filePath);
+        log.debug("SASS | Removing file", filePath);
         await fs.rm(filePath);
-        log.debug("SCSS | Done", filePath);
+        log.debug("SASS | Done", filePath);
       } catch (err) {
-        log.debug("SCSS | Compilation Error", filePath, err);
+        log.debug("SASS | Compilation Error", filePath, err);
         if (err instanceof sass.Exception) {
           const line = err.span.start.line + 1;
           const filePos = `${Config.SourcePath}${fileName}:${line}`;
