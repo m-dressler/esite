@@ -11,6 +11,6 @@
     "lib/**/*"
   ],
   "dependencies": {
-    "sass-embedded": "^1.70.0"
+    "sass": "^1.74.1"
   }
 }

@@ -1,5 +1,5 @@
 import { promises as fs } from "fs";
-import * as sass from "sass-embedded";
+import * as sass from "sass";
 
 export const CustomConfig = {} as const satisfies Configuration;
 
@@ -11,7 +11,7 @@ export const buildConfig: BuildConfig<typeof CustomConfig> = {
       const filePath = Config.BuildPath + fileName;
       try {
         log.debug("SASS | Compiling", filePath);
-        const { css } = await sass.compileAsync(filePath, {});
+        const { css } = sass.compile(filePath, {});
         const cssPath = filePath.replace(/\.(scss|sass)$/, ".css");
         log.debug("SASS | Writing file", cssPath);
         await fs.writeFile(cssPath, css, { encoding: "utf-8" });
