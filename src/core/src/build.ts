@@ -36,7 +36,7 @@ const runBuildSteps = async (
 
   // Run all steps in parallel and wait for result
   const result = await Promise.allSettled(
-    steps.map((step) => step.build(config))
+    steps.map((step) => step.build(config, { log }))
   );
   log.debug("Build step(s) complete");
   const failed = result.filter(

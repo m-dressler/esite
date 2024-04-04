@@ -21,7 +21,7 @@ const runModule = async () => {
       `Executable esite module @esite/${moduleName} not installed`
     );
   });
-  if ("run" in module) (module.run as RunFunction)({ Config, build });
+  if ("run" in module) (module.run as RunFunction)({ Config, build, log });
   else
     throw terminate(
       `Invalid Executable esite module @esite/${moduleName} has no export "run"`
@@ -81,7 +81,7 @@ const deploy = async () => {
 
       const deploy = deployer.deploy as DeployFunction;
       log.info("Deploying to", module.replace("deploy-", ""));
-      await deploy(files.flat(), { Config });
+      await deploy(files.flat(), { Config, log });
     }
   }
 };

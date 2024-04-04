@@ -1,3 +1,4 @@
+import { Logger } from "loglevel";
 import { Build } from "./build";
 import { CoreConfigValidator } from "./config";
 
@@ -40,7 +41,10 @@ declare global {
 
   type BuildConfig<T extends Configuration = {}> = {
     /** The function that builds the step */
-    build: (config: BaseConfiguration & ConfigValue<T>) => any;
+    build: (
+      config: BaseConfiguration & ConfigValue<T>,
+      other: { log: Logger }
+    ) => any;
     /** Low step BuildConfigs run before high step BuildConfigs while all same step configs may be run in parallel */
     step: number;
     /** If this step is required to create the dev version of the project */
@@ -49,10 +53,12 @@ declare global {
   type RunFunction<T extends Configuration = {}> = (params: {
     Config: BaseConfiguration & ConfigValue<T>;
     build: Build;
+    log: Logger;
   }) => any;
   type DeployFunction<T extends Configuration = {}> = (
     files: string[],
     params: {
+      log: Logger;
       Config: BaseConfiguration & ConfigValue<T>;
     }
   ) => any;
