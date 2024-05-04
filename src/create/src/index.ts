@@ -65,7 +65,7 @@ const { install } = await inquirer.prompt({
   name: "install",
   message: "Do you want to install the dependencies?",
 });
-if (["y", "ye", "yes", "yup"].includes(install.toLowerCase())) {
+if (install) {
   const hasPnpm = await exec("pnpm --version").then(
     () => true,
     () => false
