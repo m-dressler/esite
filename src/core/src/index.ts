@@ -58,8 +58,8 @@ const deploy = async () => {
     const toFilteredFullPaths = async (dirPath: string) => {
       if (dirPath.endsWith("/.DS_Store")) return [];
       const path = Config.BuildPath + dirPath;
-      const { isDirectory } = await fs.stat(path);
-      if (isDirectory()) return [];
+      const stat = await fs.stat(path);
+      if (stat.isDirectory()) return [];
       return [path];
     };
     const files = await Promise.all(directoryFiles.map(toFilteredFullPaths));
