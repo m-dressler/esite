@@ -1,2 +1,3 @@
-AWS_ACCESS_KEY_ID=<MISSING>
-AWS_SECRET_ACCESS_KEY=<MISSING>
+node_modules
+build
+.env
