@@ -15,7 +15,16 @@ export const abort = (reason?: "error") => {
   process.exit(0);
 };
 
+const commandWorks = (command: string) =>
+  exec(command).then(
+    () => true,
+    () => false
+  );
+
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
+const packageManager = await commandWorks("pnpm --version").then((hasPnpm) =>
+  hasPnpm ? "pnpm" : "npm"
+);
 
 const projectNamePromise = inquirer.prompt<{ projectName: string }>({
   type: "input",
@@ -60,23 +69,21 @@ const fsOperations = files.map(async (dirent) => {
 await Promise.all(fsOperations);
 
 console.log("\nProject created successfully");
+
+// If typescript isn't installed, offer to install globally
+if (!(await commandWorks("tsc --version"))) {
+  console.log("Installing typescript globally with " + packageManager);
+  await exec(packageManager + " i -g typescript", { cwd: projectFolder });
+}
+
 const { install } = await inquirer.prompt({
   type: "confirm",
   name: "install",
   message: "Do you want to install the dependencies?",
 });
 if (install) {
-  const hasPnpm = await exec("pnpm --version").then(
-    () => true,
-    () => false
-  );
-  if (hasPnpm) {
-    console.log("Installing with pnpm");
-    await exec("pnpm i", { cwd: projectFolder });
-  } else {
-    console.log("Installing with npm");
-    await exec("npm i", { cwd: projectFolder });
-  }
+  console.log("Installing dependencies with " + packageManager);
+  await exec(packageManager + " i", { cwd: projectFolder });
 } else {
   console.log(
     "Skipping install — install dependencies manually by running `npm i` inside the project folder"
@@ -85,8 +92,12 @@ if (install) {
 
 console.log("\n\nYour project", projectName, "is all set up!");
 console.log();
-console.log("Run `npm run preview` to start a development server locally");
-console.log("And `npm run publish` to upload your project to the cloud");
+console.log(
+  `Run \`${packageManager} run preview\` to start a development server locally`
+);
+console.log(
+  `And \`${packageManager} run publish\` to upload your project to the cloud`
+);
 console.log();
 console.log(
   "Make sure you configure `esite.yaml` and `.env` correctly for your project"
